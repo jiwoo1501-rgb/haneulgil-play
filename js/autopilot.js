@@ -3,9 +3,9 @@
 // 세로: ALT / VS / FLCH(속도 유지 상승·강하) / PATH(자동 강하 경로) / GS(3° 활공) / FLARE / SRS(이륙) / ROLLOUT
 // 추력: SPD / CLB / IDLE / RETARD / TOGA
 
-import { DEG, KT, FT, FPM, NM, clamp, angDiff, distBrg } from './geo.js?v=202609290952';
-import { casToTas, machToCas } from './atmosphere.js?v=202609290952';
-import { rwyRel, rwyAngle, toTrue, toMag, GS_ANGLE, GPI } from './nav.js?v=202609290952';
+import { DEG, KT, FT, FPM, NM, clamp, angDiff, distBrg } from './geo.js?v=202609291314';
+import { casToTas, machToCas } from './atmosphere.js?v=202609291314';
+import { rwyRel, rwyAngle, toTrue, toMag, GS_ANGLE, GPI } from './nav.js?v=202609291314';
 
 const G0 = 9.80665;
 

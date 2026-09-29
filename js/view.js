@@ -1,12 +1,20 @@
 /* global Cesium */
 // Cesium 화면: 지구·지형·건물, 항공기 모델, 조명, 카메라 시점, PAPI
-import { CESIUM_TOKEN } from './config.js?v=202609290952';
-import { v3, quat, enu, geodeticToEcef, ecefToGeodetic, DEG, clamp, angDiff, destPoint } from './geo.js?v=202609290952';
-import { rwyRel } from './nav.js?v=202609290952';
-import { FlatTerrainProvider, sampleRunway, fitProfile, makeZone } from './flatten.js?v=202609290952';
+import { CESIUM_TOKEN } from './config.js?v=202609291314';
+import { v3, quat, enu, geodeticToEcef, ecefToGeodetic, DEG, clamp, angDiff, destPoint } from './geo.js?v=202609291314';
+import { rwyRel } from './nav.js?v=202609291314';
+import { FlatTerrainProvider, sampleRunway, fitProfile, makeZone } from './flatten.js?v=202609291314';
 
 const C3 = (a) => new Cesium.Cartesian3(a[0], a[1], a[2]);
+
+// 화질 단계: 해상도 배율(scale, 자동 조절 하한 minScale), MSAA, 지형 세밀도(sse), 그림자, 건물 세밀도, 안개
+const QUALITY = {
+  high: { retina: true, scale: 1, minScale: 0.6, msaa: 4, sse: 1.5, shadows: true, shadowSize: 2048, soft: true, bldSse: 8, fog: 1.6e-4, cache: 400 },
+  mid: { retina: false, scale: 1, minScale: 0.6, msaa: 1, sse: 2, shadows: true, shadowSize: 1024, soft: false, bldSse: 16, fog: 2.0e-4, cache: 300 },
+  low: { retina: false, scale: 0.8, minScale: 0.5, msaa: 1, sse: 3, shadows: false, bldSse: 32, fog: 2.6e-4, cache: 150 },
+};
 const gltfToBody = (p) => [p[2], -p[0], -p[1]];
+const SQ = new Cesium.Quaternion(), SM3 = new Cesium.Matrix3(), SM4 = new Cesium.Matrix4();
 
 export class View {
   // runways: 모든 활주로 끝 기하 (양방향). 지형 측정 → 평탄화 지형 제공자 생성 후 화면 생성
@@ -38,39 +46,47 @@ export class View {
     }));
     const terrainProvider = new FlatTerrainProvider(inner, zones);
     this.terrainProvider = terrainProvider;
+    const Q = QUALITY[q] || QUALITY.mid;
+    this.Q = Q;
     const viewer = new Cesium.Viewer(container, {
       terrainProvider,
       baseLayer: Cesium.ImageryLayer.fromWorldImagery({ style: Cesium.IonWorldImageryStyle.AERIAL }),
       baseLayerPicker: false, geocoder: false, homeButton: false, sceneModePicker: false,
       navigationHelpButton: false, animation: false, timeline: false, fullscreenButton: false,
       infoBox: false, selectionIndicator: false, shouldAnimate: true,
-      msaaSamples: q === 'high' ? 4 : q === 'mid' ? 2 : 1,
-      shadows: q !== 'low',
-      terrainShadows: q !== 'low' ? Cesium.ShadowMode.RECEIVE_ONLY : Cesium.ShadowMode.DISABLED,
+      msaaSamples: Q.msaa,
+      shadows: false,
+      terrainShadows: Q.shadows ? Cesium.ShadowMode.RECEIVE_ONLY : Cesium.ShadowMode.DISABLED,
     });
     this.viewer = viewer;
     const scene = viewer.scene;
     this.scene = scene;
     this.camera = scene.camera;
-    viewer.resolutionScale = q === 'high' ? Math.min(window.devicePixelRatio, 2) : q === 'mid' ? Math.min(window.devicePixelRatio, 1.5) : 1;
-    viewer.useBrowserRecommendedResolution = false;
+    // 해상도: 보통·낮음은 화면(CSS) 해상도 기준, 높음만 레티나 해상도(최대 2배)
+    //  (이전: 레티나 2배 × 1.5배 = 3배 해상도로 그려서 매우 느렸음)
+    viewer.useBrowserRecommendedResolution = !Q.retina;
+    this.baseScale = Q.retina ? Math.min(1, 2 / Math.max(1, window.devicePixelRatio)) : Q.scale;
+    viewer.resolutionScale = this.baseScale;
     scene.screenSpaceCameraController.enableInputs = false;
     scene.globe.enableLighting = true;
     scene.globe.baseColor = Cesium.Color.fromCssColorString('#5d6a5a');
     scene.globe.depthTestAgainstTerrain = true;
-    scene.globe.maximumScreenSpaceError = q === 'high' ? 1.33 : q === 'mid' ? 1.7 : 3;
-    scene.globe.tileCacheSize = q === 'low' ? 150 : 400;
-    scene.globe.preloadSiblings = q !== 'low';
+    scene.globe.maximumScreenSpaceError = Q.sse;
+    scene.globe.tileCacheSize = Q.cache;
+    scene.globe.preloadSiblings = false;
+    scene.globe.preloadAncestors = true;
     scene.fog.enabled = true;
-    scene.fog.density = 1.6e-4;
+    scene.fog.density = Q.fog;
+    scene.fog.screenSpaceErrorFactor = 3;
     if (scene.atmosphere && Cesium.DynamicAtmosphereLightingType) scene.atmosphere.dynamicLighting = Cesium.DynamicAtmosphereLightingType.SUNLIGHT;
-    scene.postProcessStages.fxaa.enabled = q !== 'high';
+    scene.postProcessStages.fxaa.enabled = Q.msaa <= 1;
     if (viewer.shadowMap) {
-      viewer.shadowMap.maximumDistance = 600;
-      viewer.shadowMap.size = q === 'high' ? 4096 : 2048;
-      viewer.shadowMap.softShadows = q === 'high';
+      viewer.shadowMap.maximumDistance = 400;
+      viewer.shadowMap.size = Q.shadowSize || 1024;
+      viewer.shadowMap.softShadows = !!Q.soft;
       viewer.shadowMap.darkness = 0.35;
     }
+    if (/[?&]fps\b/.test(location.search)) scene.debugShowFramesPerSecond = true;
     this.camera.frustum.near = 0.3;
 
     // 건물
@@ -82,7 +98,7 @@ export class View {
         this.tiles = await Cesium.createGooglePhotorealistic3DTileset();
         scene.primitives.add(this.tiles);
       }
-      if (this.tiles) this.tiles.maximumScreenSpaceError = q === 'high' ? 8 : q === 'mid' ? 16 : 32;
+      if (this.tiles) { this.tiles.maximumScreenSpaceError = Q.bldSse; this.tiles.cacheBytes = 256 * 1024 * 1024; }
     } catch (e) { console.warn('건물 불러오기 실패', e); }
 
     this.points = scene.primitives.add(new Cesium.PointPrimitiveCollection());
@@ -106,6 +122,46 @@ export class View {
     clock.currentTime = Cesium.JulianDate.fromDate(date);
     clock.shouldAnimate = true;
     clock.multiplier = 1;
+  }
+
+  // 성능: 해 위치 계산은 비싸므로 실시간 1초·위치 20km 단위로 재사용
+  sunElevationCached(lat, lon) {
+    const now = performance.now();
+    const c = this._sunC;
+    const simT = Cesium.JulianDate.toDate(this.viewer.clock.currentTime).getTime();
+    if (c && now - c.t < 1000 && Math.abs(simT - c.simT) < 120e3 && Math.abs(lat - c.lat) < 0.003 && Math.abs(lon - c.lon) < 0.003) return c.v;
+    const v = this.sunElevation(lat, lon);
+    this._sunC = { t: now, simT, lat, lon, v };
+    return v;
+  }
+
+  // 프레임 시간(ms)에 따라 렌더 해상도 자동 조절 (목표 약 40fps 이상)
+  adaptResolution(frameMs) {
+    const a = this._adapt || (this._adapt = { ema: 16, t: 0 });
+    a.ema += (Math.min(frameMs, 200) - a.ema) * 0.05;
+    const now = performance.now();
+    if (now - a.t < 2500 || document.hidden) return;
+    const v = this.viewer, g = this.scene.globe;
+    const lo = this.Q.minScale * this.baseScale;
+    let s = v.resolutionScale;
+    if (a.ema > 30) {
+      // 느리면: 해상도 먼저 낮추고, 최저에 닿으면 지형 세밀도를 낮춤
+      if (s > lo + 1e-3) s = Math.max(lo, s - 0.1);
+      else if (g.maximumScreenSpaceError < this.Q.sse * 2) g.maximumScreenSpaceError += 0.5;
+      else return;
+    } else if (a.ema < 19) {
+      if (g.maximumScreenSpaceError > this.Q.sse) g.maximumScreenSpaceError = Math.max(this.Q.sse, g.maximumScreenSpaceError - 0.5);
+      else if (s < this.baseScale - 1e-3) s = Math.min(this.baseScale, s + 0.1);
+      else return;
+    } else return;
+    a.t = now;
+    v.resolutionScale = Math.round(s * 100) / 100;
+  }
+
+  // 그림자: 화질이 허용하고 항공기가 지면 가까이 있을 때만 (멀면 보이지 않고 비용만 큼)
+  setShadows(on) {
+    const want = !!(on && this.Q.shadows);
+    if (this.viewer.shadows !== want) this.viewer.shadows = want;
   }
 
   sunElevation(lat, lon) {
@@ -230,10 +286,12 @@ export class View {
         case 'elevator': frac = clamp(-(fm.w[1] / (6 * DEG)) - (ap ? 0 : inp.pitch * 0.6), -1, 1) * 0.5; break;
         case 'rudder': frac = clamp(-inp.yaw, -1, 1) * 0.6; break;
       }
+      if (a.last != null && Math.abs(a.last - frac) < 0.002) continue;   // 변화 없으면 건너뜀
+      a.last = frac;
       const ang = (a.angle * DEG) * frac;
-      const q = Cesium.Quaternion.fromAxisAngle(new Cesium.Cartesian3(a.axis[0], a.axis[1], a.axis[2]), ang);
-      const r = Cesium.Matrix4.fromRotationTranslation(Cesium.Matrix3.fromQuaternion(q));
-      a.node.matrix = Cesium.Matrix4.multiply(a.orig, r, new Cesium.Matrix4());
+      const q = Cesium.Quaternion.fromAxisAngle(a.axisC || (a.axisC = new Cesium.Cartesian3(a.axis[0], a.axis[1], a.axis[2])), ang, SQ);
+      const r = Cesium.Matrix4.fromRotationTranslation(Cesium.Matrix3.fromQuaternion(q, SM3), Cesium.Cartesian3.ZERO, SM4);
+      a.node.matrix = Cesium.Matrix4.multiply(a.orig, r, a.mat || (a.mat = new Cesium.Matrix4()));
       if (a.kind === 'gear') a.node.show = frac < 0.995;
     }
   }

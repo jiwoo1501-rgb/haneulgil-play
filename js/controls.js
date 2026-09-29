@@ -1,5 +1,5 @@
 // 조작 입력: 키보드 · 게임패드 · 터치
-import { clamp } from './geo.js?v=202609290952';
+import { clamp } from './geo.js?v=202609291314';
 
 export class Controls {
   constructor(onAction) {

@@ -1,8 +1,8 @@
 // 계기판 (캔버스): PFD(주비행표시) · ND(항법표시) · EICAS(엔진·장치)
-import { DEG, KT, FT, FPM, NM, clamp, angDiff, distBrg } from './geo.js?v=202609290952';
-import { toMag, rwyRel } from './nav.js?v=202609290952';
-import { AIRPORTS } from '../data/airports.js?v=202609290952';
-import { machToCas } from './atmosphere.js?v=202609290952';
+import { DEG, KT, FT, FPM, NM, clamp, angDiff, distBrg } from './geo.js?v=202609291314';
+import { toMag, rwyRel } from './nav.js?v=202609291314';
+import { AIRPORTS } from '../data/airports.js?v=202609291314';
+import { machToCas } from './atmosphere.js?v=202609291314';
 
 const FONT = "'B612 Mono', Menlo, monospace";
 const MAG = '#ff5cf0', CYAN = '#3ad7ff', GREEN = '#3dff8f', AMBER = '#ffb020', RED = '#ff3b3b', WHITE = '#f4f7fb';
@@ -36,10 +36,12 @@ export class Hud {
     this.ndRange = 20;
   }
 
+  // PFD는 매번(30Hz), 지도·엔진 화면은 번갈아(각 15Hz) 그려 부담을 줄임
   draw(sim, extra) {
+    this.n = (this.n || 0) + 1;
     this.drawPfd(sim, extra);
-    this.drawNd(sim, extra);
-    this.drawEicas(sim, extra);
+    if (this.n % 2) this.drawNd(sim, extra);
+    else this.drawEicas(sim, extra);
   }
 
   // ======================= PFD =======================

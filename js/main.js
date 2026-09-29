@@ -1,16 +1,16 @@
 /* global Cesium */
 // 하늘길 — 메뉴 · 비행 준비 · 게임 루프 · 계기/패널 연결
-import { AIRCRAFT, AIRCRAFT_ORDER, planWeights } from '../data/aircraft.js?v=202609290952';
-import { AIRPORTS, ROUTES } from '../data/airports.js?v=202609290952';
-import { View } from './view.js?v=202609290952';
-import { Hud } from './hud.js?v=202609290952';
-import { Controls } from './controls.js?v=202609290952';
-import { Audio } from './audio.js?v=202609290952';
-import { Sim, makeEnv } from './sim.js?v=202609290952';
-import { runwayGeom, rwyRel, finalFix, toMag, toTrue } from './nav.js?v=202609290952';
-import { scoreLanding } from './score.js?v=202609290952';
-import { DEG, KT, FT, FPM, NM, clamp, distBrg, angDiff } from './geo.js?v=202609290952';
-import { machToCas } from './atmosphere.js?v=202609290952';
+import { AIRCRAFT, AIRCRAFT_ORDER, planWeights } from '../data/aircraft.js?v=202609291314';
+import { AIRPORTS, ROUTES } from '../data/airports.js?v=202609291314';
+import { View } from './view.js?v=202609291314';
+import { Hud } from './hud.js?v=202609291314';
+import { Controls } from './controls.js?v=202609291314';
+import { Audio } from './audio.js?v=202609291314';
+import { Sim, makeEnv } from './sim.js?v=202609291314';
+import { runwayGeom, rwyRel, finalFix, toMag, toTrue } from './nav.js?v=202609291314';
+import { scoreLanding } from './score.js?v=202609291314';
+import { DEG, KT, FT, FPM, NM, clamp, distBrg, angDiff } from './geo.js?v=202609291314';
+import { machToCas } from './atmosphere.js?v=202609291314';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -108,7 +108,7 @@ async function ensureView(msg) {
       return { lat: a.lat * DEG, lon: a.lon * DEG, N: gs.reduce((s, g) => s + g.geoidN, 0) / gs.length };
     });
     view.viewer.scene.preUpdate.addEventListener(frame);
-    try { meta = await (await fetch('models/models.json?v=202609290952', { cache: 'no-cache' })).json(); } catch { meta = {}; }
+    try { meta = await (await fetch('models/models.json?v=202609291314', { cache: 'no-cache' })).json(); } catch { meta = {}; }
   }
   await viewReady;
   return Object.values(runways);
@@ -118,7 +118,10 @@ async function ensureView(msg) {
 // 아직 저해상도 타일만 있으면 큰 삼각형이 지구 곡면 아래로 처져 수 km 낮은 값이 나오므로 해수면으로 대체
 let tq = { lat: 0, lon: 0, h: null };
 function terrainCached(lat, lon) {
-  if (tq.h != null && Math.abs(lat - tq.lat) < 2.4e-6 && Math.abs(lon - tq.lon) < 3e-6) return tq.h;
+  // 지면에서 높을수록 조회 간격을 넓힘 (지면 근처 15m, 높은 고도 최대 약 1.5km)
+  const agl = sim ? sim.fm.d.hAGL : 0;
+  const k = agl < 300 ? 1 : Math.min(100, agl / 300);
+  if (tq.h != null && Math.abs(lat - tq.lat) < 2.4e-6 * k && Math.abs(lon - tq.lon) < 3e-6 * k) return tq.h;
   let h = view.terrainHeight(lat, lon);
   const sea = geoidN(lat, lon);
   if (h == null || h < sea - 40 || h > 3000) h = Math.max(sea, tq.h != null && Math.abs(lat - tq.lat) < 1e-3 ? tq.h : sea);
@@ -139,6 +142,12 @@ function geoidN(lat, lon) {
 }
 
 async function startFlight() {
+  // 화질·건물 설정은 화면을 처음 만들 때만 적용되므로, 바뀌었으면 새로고침 후 바로 시작
+  if (view.opts && (view.opts.quality !== $('opt-q').value || view.opts.buildings !== $('opt-bld').value)) {
+    store.set('autostart', true);
+    location.reload();
+    return;
+  }
   audio.start();
   $('menu').hidden = true;
   $('result').hidden = true; $('pause').hidden = true;
@@ -171,7 +180,7 @@ async function startFlight() {
     const m = meta[ac.id];
     sim = new Sim({ ac, meta: m, env, dep, dest, cruiseFt, start, routeKm });
     scenario = { ac, dep, dest, cruiseFt, label, start };
-    try { await view.loadAircraft(ac.model + '?v=' + (m?.version || '202609290952'), m); } catch (e) { console.warn('모델 없음', e); }
+    try { await view.loadAircraft(ac.model + '?v=' + (m?.version || '202609291314'), m); } catch (e) { console.warn('모델 없음', e); }
     if (dest) view.makePapi(dest);
     view.makeRunwayLights(all);
     towerCache = null;
@@ -250,7 +259,7 @@ function onAction(name, arg) {
       $('btn-time').textContent = '×' + timeScale;
       break;
     }
-    case 'hidepanel': document.body.classList.toggle('hide-panel'); break;
+    case 'hidepanel': togglePanel(); break;
     case 'pause': togglePause(); break;
     case 'help': $('help').hidden = !$('help').hidden; break;
     case 'app': armApp(); break;
@@ -311,6 +320,19 @@ function armApp() {
   }
   ap.armLoc = ap.lat !== 'LOC'; ap.armGs = ap.vert !== 'GS';
   flash(`착륙 접근 준비: ${ap.dest.icao} ${ap.dest.name}`);
+}
+
+// 계기판 전체(PFD·ND·엔진 화면·자동조종 패널·비행 정보) 켜고 끄기
+function togglePanel(force) {
+  const hide = force ?? !document.body.classList.contains('hide-panel');
+  document.body.classList.toggle('hide-panel', hide);
+  $('btn-panel').classList.toggle('off', hide);
+  $('btn-panel').textContent = hide ? '계기판 켜기' : '계기판 끄기';
+  store.set('hidePanel', hide);
+  if (sim) {
+    flash(hide ? '계기판 숨김 — 다시 켜려면 [계기판 켜기] 또는 H' : '계기판 표시');
+    if (!hide) { updatePanel(); updateInfo(); hudT = 1; }
+  }
 }
 
 function togglePause(force) {
@@ -514,26 +536,30 @@ function showCrash(reason) {
 // ======================= 루프 =======================
 function frame() {
   const now = performance.now();
-  let dt = Math.min(0.1, (now - last) / 1000);
+  const rawMs = now - last;
+  let dt = Math.min(0.1, rawMs / 1000);
   last = now;
   if (!sim) return;
+  view.adaptResolution(rawMs);
   const fm = sim.fm;
   if (!paused && $('menu').hidden) {
     const inp = controls.update(dt);
     sim.input.pitch = inp.pitch; sim.input.roll = inp.roll; sim.input.yaw = inp.yaw; sim.input.brake = inp.brake;
     // 낮은 고도 자동 감속
     if (timeScale > 4 && (fm.onGround || fm.d.ra < 2500 * FT)) { timeScale = 4; view.viewer.clock.multiplier = 4; $('btn-time').textContent = '×4'; }
-    if (timeScale > 1 && (fm.onGround && fm.d.gs < 5 && !sim.fms.enabled)) { /* 정지 중 배속 유지 */ }
-    const h = 1 / 120;
-    acc += dt * timeScale;
-    let n = 0;
+    // 물리: 이번 프레임 시간만큼 정확히 진행 (1/120초 이하로 나눠서) → 화면 프레임과 어긋나 떨리는 현상 없음
+    const simDt = dt * timeScale;
+    const n = Math.max(1, Math.ceil(simDt * 120 - 1e-6));
+    const h = simDt / n;
     const v0 = fm.d.cas;
-    while (acc >= h && n < 1500) { sim.step(h); acc -= h; n++; t += h; }
-    if (n) sim.accelKt = ((fm.d.cas - v0) / KT) / (n * h);
+    for (let i = 0; i < n; i++) { sim.step(h); t += h; }
+    const a = ((fm.d.cas - v0) / KT) / Math.max(simDt, 1e-3);
+    sim.accelKt = (sim.accelKt ?? 0) + (a - (sim.accelKt ?? 0)) * Math.min(1, dt * 4);
     handleEvents(sim.drainEvents());
     callouts(fm);
   }
-  const sunEl = view.sunElevation(fm.d.lat, fm.d.lon);
+  view.setShadows(fm.d.ra < 250 && view.mode !== 'cockpit');
+  const sunEl = view.sunElevationCached(fm.d.lat, fm.d.lon);
   view.night = sunEl < -4 * DEG;
   if (view.rwyLights) view.rwyLights.show = sunEl < -1 * DEG;
   // 해가 지면 항공기 조명도 어둡게 (Cesium은 해가 지평선 아래여도 모델을 비추므로)
@@ -550,15 +576,16 @@ function frame() {
   hudT += dt;
   if (hudT > 1 / 30) {
     hudT = 0;
-    const al = alerts(fm);
-    const vspd = fm.onGround || fm.d.ra < 500 * FT ? (sim.ap.takeoffSpeedsCache || sim.ap.takeoffSpeeds()) : null;
-    hud.draw(sim, { fd, warn: al.warn, alerts: al.list, vspd, geoidN: geoidN(fm.d.lat, fm.d.lon), finalFix: sim.ap.dest ? finalFix(sim.ap.dest, 15 * NM) : null });
+    const al = alerts(fm);   // 경고음은 계기판을 숨겨도 계속
+    if (!document.body.classList.contains('hide-panel')) {
+      const vspd = fm.onGround || fm.d.ra < 500 * FT ? (sim.ap.takeoffSpeedsCache || sim.ap.takeoffSpeeds()) : null;
+      hud.draw(sim, { fd, warn: al.warn, alerts: al.list, vspd, geoidN: geoidN(fm.d.lat, fm.d.lon), finalFix: sim.ap.dest ? finalFix(sim.ap.dest, 15 * NM) : null });
+    }
   }
   uiT += dt;
   if (uiT > 0.15) {
     uiT = 0;
-    updatePanel();
-    updateInfo();
+    if (!document.body.classList.contains('hide-panel')) { updatePanel(); updateInfo(); }
     controls.updateTouchUi && controls.updateTouchUi();
   }
 }
@@ -573,11 +600,19 @@ function updateInfo() {
 // ======================= 연결 =======================
 function wire() {
   buildMenu();
+  // 메뉴 옵션 기억 (터치 기기는 처음에 화질 '낮음')
+  for (const id of ['opt-time', 'opt-bld', 'opt-q']) {
+    const saved = store.get(id, id === 'opt-q' && isTouch() ? 'low' : null);
+    if (saved != null) $(id).value = saved;
+    $(id).addEventListener('change', () => store.set(id, $(id).value));
+  }
   setupPanel();
   controls.setupTouch(() => (sim ? sim.fm.lever : 0));
   $('btn-start').onclick = () => startFlight();
   $('btn-view').onclick = () => onAction('view');
   $('btn-mcp').onclick = () => document.body.classList.toggle('mcp-open');
+  $('btn-panel').onclick = () => togglePanel();
+  togglePanel(store.get('hidePanel', false));
   $('btn-time').onclick = () => onAction('timescale', timeScale >= 16 ? -4 : 1);
   $('btn-sound').onclick = () => { audio.setOn(!audio.on); $('btn-sound').textContent = audio.on ? '🔊' : '🔈'; };
   $('btn-help').onclick = () => { $('help').hidden = false; };
@@ -601,6 +636,9 @@ function toMenu() {
 }
 
 wire();
+if (store.get('autostart', false)) { store.set('autostart', false); startFlight(); }
+// 브라우저는 사용자 조작 뒤에만 소리를 허용 → 첫 클릭·키 입력 때 소리 시작
+for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, () => audio.start(), { once: true });
 // 디버그용 접근 (콘솔)
 window.__sky = {
   get view() { return view; }, get sim() { return sim; }, get runways() { return runways; },

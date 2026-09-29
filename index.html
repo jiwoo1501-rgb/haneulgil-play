@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/Widgets/widgets.css">
-<link rel="stylesheet" href="css/style.css?v=202609290952">
+<link rel="stylesheet" href="css/style.css?v=202609291314">
 <script src="https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/Cesium.js"></script>
 </head>
 <body>
@@ -54,9 +54,9 @@
       </label>
       <label class="opt-inline">화질
         <select id="opt-q">
-          <option value="high">높음</option>
-          <option value="mid" selected>보통</option>
-          <option value="low">낮음 (태블릿)</option>
+          <option value="high">높음 (선명, 고성능 PC)</option>
+          <option value="mid" selected>보통 (권장)</option>
+          <option value="low">낮음 (태블릿·휴대폰)</option>
         </select>
       </label>
       <button id="btn-start" class="primary">비행 시작 ✈</button>
@@ -78,6 +78,7 @@
   <div id="topbar">
     <div id="flight-info"></div>
     <div class="top-btns">
+      <button id="btn-panel" title="계기판 전체 켜기/끄기 (H)">계기판 끄기</button>
       <button id="btn-mcp" title="자동조종 패널">AP 패널</button>
       <button id="btn-view" title="시점 (C)">시점</button>
       <button id="btn-time" title="시간 배속 (T)">×1</button>
@@ -173,7 +174,7 @@
       <div><h3>화면</h3>
         <p><kbd>C</kbd> 또는 <kbd>1</kbd>~<kbd>4</kbd> 시점 (조종석·추적·자유·관제탑)</p>
         <p>마우스 끌기: 둘러보기 · 휠: 거리</p>
-        <p><kbd>T</kbd> 시간 배속 · <kbd>H</kbd> 계기판 숨기기 · <kbd>Esc</kbd> 일시정지</p>
+        <p><kbd>T</kbd> 시간 배속 · <kbd>H</kbd> 계기판 전체 켜기/끄기 · <kbd>Esc</kbd> 일시정지</p>
       </div>
     </div>
     <p class="note">이륙 요령: 추력 최대(<kbd>+</kbd> 길게) → 주차 브레이크 풀기(<kbd>P</kbd>) → 속도계의 VR 표시에서 <kbd>↓</kbd> 로 천천히 들기 → 상승하면 <kbd>G</kbd> 바퀴 올림</p>
@@ -181,6 +182,6 @@
   </div>
 </section>
 
-<script type="module" src="js/main.js?v=202609290952"></script>
+<script type="module" src="js/main.js?v=202609291314"></script>
 </body>
 </html>

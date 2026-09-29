@@ -3,8 +3,8 @@
 // (원본 지형 자료에는 인천공항 활주로에서도 ±6m 요철이 있어 바퀴가 뜨거나 파묻힘)
 // 활주로마다 중심선 높이를 측정 → 직선 회귀(이상치 제거) → 구역 안 지형 꼭짓점을 그 높이로 맞춤
 
-import { rwyRel } from './nav.js?v=202609290952';
-import { destPoint } from './geo.js?v=202609290952';
+import { rwyRel } from './nav.js?v=202609291314';
+import { destPoint } from './geo.js?v=202609291314';
 
 const INNER = 110;   // 중심선에서 완전 평탄 폭 (m, 한쪽)
 const BLEND = 90;    // 자연 지형으로 이어지는 폭 (m)

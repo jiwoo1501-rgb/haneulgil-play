@@ -112,7 +112,9 @@ button.mode.auto.on { background: linear-gradient(180deg, #1c8fe0, #1269b0); box
 body.cockpit #panel { left: 50%; transform: translateX(-50%); bottom: 8px; }
 body.cockpit #panel canvas { width: 310px; height: 310px; }
 body.cockpit #panel #eicas { width: 190px; height: 272px; }
-body.hide-panel #panel { display: none; }
+body.hide-panel #panel, body.hide-panel #mcp, body.hide-panel #flight-info, body.hide-panel #btn-mcp { display: none !important; }
+#btn-panel { font-family: var(--sans); }
+#btn-panel.off { border-color: var(--accent); color: var(--accent); }
 
 #cockpit-frame { position: fixed; inset: 0; z-index: 5; pointer-events: none;
   background:

@@ -2,9 +2,9 @@
 // 켜져 있으면 자동조종 모드·목표값과 플랩·바퀴·스피드브레이크·역추력·자동브레이크를 알아서 조작
 // 조종사가 자동조종을 끄면 관리도 멈춤 (다시 켜면 현재 단계부터 이어서)
 
-import { DEG, KT, FT, FPM, NM, clamp } from './geo.js?v=202609290952';
-import { machToCas } from './atmosphere.js?v=202609290952';
-import { rwyRel, approachWaypoints, toMag, IF_HEIGHT, GS_ANGLE } from './nav.js?v=202609290952';
+import { DEG, KT, FT, FPM, NM, clamp } from './geo.js?v=202609291314';
+import { machToCas } from './atmosphere.js?v=202609291314';
+import { rwyRel, approachWaypoints, toMag, IF_HEIGHT, GS_ANGLE } from './nav.js?v=202609291314';
 
 export const PHASE_KO = {
   PREFLIGHT: '출발 준비', TAKEOFF: '이륙', CLIMB: '상승', CRUISE: '순항', DESCENT: '강하',
