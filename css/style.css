@@ -98,6 +98,13 @@ button.mode.big { font-weight: 700; min-width: 46px; }
 button.mode.auto { font-family: var(--sans); font-weight: 700; font-size: 12px; }
 button.mode.auto.on { background: linear-gradient(180deg, #1c8fe0, #1269b0); box-shadow: none; border-color: #3aa8ff; }
 
+/* 상태 표시등 (브레이크 등) — 계기판을 숨겨도 보임 */
+#lamps { position: absolute; top: 54px; right: 12px; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.lamp { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 7px; background: rgba(8,14,22,0.72); color: #5f6f80; border: 1px solid #243345; letter-spacing: -0.01em; backdrop-filter: blur(4px); }
+.lamp.red { background: #c21f1f; color: #fff; border-color: #ff6b6b; box-shadow: 0 0 10px rgba(255,60,60,0.55); }
+.lamp.amber { background: #b77400; color: #fff; border-color: #ffc14d; box-shadow: 0 0 10px rgba(255,180,40,0.5); }
+.lamp.green { background: #11703f; color: #eafff2; border-color: #3dff8f; }
+.lamp.arm { color: #3dff8f; border-color: #1f6b43; }
 #msg { position: absolute; top: 108px; left: 50%; transform: translateX(-50%); font-weight: 700; font-size: 15px; background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 8px; opacity: 0; transition: opacity .3s; white-space: nowrap; }
 #msg.show { opacity: 1; }
 #msg.warn { color: var(--warn); }
@@ -133,7 +140,8 @@ body.hide-panel #panel, body.hide-panel #mcp, body.hide-panel #flight-info, body
 #thr-fill { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(61,255,143,0.25); }
 #thr-handle { position: absolute; left: 4px; right: 4px; height: 26px; border-radius: 8px; background: #d8dde4; bottom: 0; }
 #thr-slider span { position: absolute; top: 6px; width: 100%; text-align: center; font-size: 11px; color: var(--dim); }
-#touch-btns { position: absolute; right: 16px; bottom: 228px; display: grid; grid-template-columns: repeat(6, 64px); gap: 6px; }
+#touch-btns { position: absolute; right: 16px; bottom: 228px; display: grid; grid-template-columns: repeat(7, 64px); gap: 6px; }
+#touch-btns button { line-height: 1.1; }
 #touch-btns button { height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 12.5px; }
 body.touch #panel canvas { width: 220px; height: 220px; }
 body.touch #panel #eicas { width: 136px; height: 196px; }
@@ -155,8 +163,10 @@ body.touch #panel #eicas { width: 136px; height: 196px; }
   body.touch #panel canvas { width: 165px; height: 165px; }
   #stick { width: 124px; height: 124px; right: 96px; }
   #thr-slider { height: 150px; }
-  #touch-btns { bottom: auto; top: 52px; right: 12px; grid-template-columns: repeat(3, 62px); }
-  #touch-btns button { height: 34px; font-size: 11.5px; }
+  #touch-btns { bottom: auto; top: 52px; right: 12px; grid-template-columns: repeat(4, 58px); }
+  #touch-btns button { height: 34px; font-size: 11px; line-height: 1.05; }
+  #lamps { top: 50px; right: auto; left: 12px; align-items: flex-start; }
+  .lamp { font-size: 10.5px; padding: 3px 7px; }
 }
 @media (orientation: portrait) and (max-width: 700px) {
   body.touch #rotate-hint { display: flex; position: fixed; inset: 0; z-index: 60; background: rgba(3,8,16,0.92); align-items: center; justify-content: center; text-align: center; font-size: 18px; line-height: 1.7; padding: 24px; pointer-events: auto; }

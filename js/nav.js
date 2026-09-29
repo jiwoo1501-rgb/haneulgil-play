@@ -1,6 +1,6 @@
 // 활주로 기하·항로
-import { findRunwayEnd, MAG_VAR_DEG } from '../data/airports.js?v=202609291349';
-import { DEG, NM, FT, distBrg, destPoint, angDiff, enu, v3, geodeticToEcef } from './geo.js?v=202609291349';
+import { findRunwayEnd, MAG_VAR_DEG } from '../data/airports.js?v=202609291420';
+import { DEG, NM, FT, distBrg, destPoint, angDiff, enu, v3, geodeticToEcef } from './geo.js?v=202609291420';
 
 const MAGVAR = MAG_VAR_DEG * DEG;
 export const toMag = (t) => (((t - MAGVAR) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);

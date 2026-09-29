@@ -1,6 +1,6 @@
 // 착륙 평가 (100점)
-import { DEG, KT } from './geo.js?v=202609291349';
-import { rwyRel } from './nav.js?v=202609291349';
+import { DEG, KT } from './geo.js?v=202609291420';
+import { rwyRel } from './nav.js?v=202609291420';
 
 const band = (v, steps) => { for (const [lim, pts] of steps) if (v <= lim) return pts; return 0; };
 

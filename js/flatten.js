@@ -5,7 +5,7 @@
 //   공항 표면 = 활주로 끝 공식 표고(AIP) + 지오이드 높이(원본 지형 중앙값으로 추정)로 만든 평면,
 //   활주로 주변은 그 활주로의 표고 직선(양 끝 AIP 표고)을 그대로 사용
 
-import { destPoint } from './geo.js?v=202609291349';
+import { destPoint } from './geo.js?v=202609291420';
 
 const R = 6371008.8;
 const BAND = 300;       // 경계 밖 연결 폭 (m)
@@ -85,7 +85,27 @@ export function buildAirportZone(apt, runways, samplesByRwy, area) {
   const pad = BAND + 50;
   const bx = { x0: Math.min(...xs) - pad, x1: Math.max(...xs) + pad, y0: Math.min(...ys) - pad, y1: Math.max(...ys) + pad };
   const bbox = { w: lon0 + bx.x0 / kx, e: lon0 + bx.x1 / kx, s: lat0 + bx.y0 / ky, n: lat0 + bx.y1 / ky };
-  return { icao: apt.icao, lat0, lon0, kx, ky, N, plane, rwys, poly, bx, bbox };
+  // 경계까지의 부호 거리(안쪽 음수)를 25m 격자로 미리 계산 → 타일마다 다각형 계산을 반복하지 않음
+  const cell = 25;
+  const nx = Math.ceil((bx.x1 - bx.x0) / cell) + 1, ny = Math.ceil((bx.y1 - bx.y0) / cell) + 1;
+  const sd = new Float32Array(nx * ny);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const x = bx.x0 + i * cell, y = bx.y0 + j * cell;
+    const dd = distPoly(poly, x, y);
+    sd[j * nx + i] = inPoly(poly, x, y) ? -dd : dd;
+  }
+  const raster = { cell, nx, ny, sd };
+  return { icao: apt.icao, lat0, lon0, kx, ky, N, plane, rwys, poly, bx, bbox, raster };
+}
+
+// 부호 거리 (양선형 보간)
+function signedDist(z, x, y) {
+  const r = z.raster;
+  const fx = (x - z.bx.x0) / r.cell, fy = (y - z.bx.y0) / r.cell;
+  const i = Math.max(0, Math.min(r.nx - 2, Math.floor(fx))), j = Math.max(0, Math.min(r.ny - 2, Math.floor(fy)));
+  const tx = Math.max(0, Math.min(1, fx - i)), ty = Math.max(0, Math.min(1, fy - j));
+  const a = r.sd[j * r.nx + i], b = r.sd[j * r.nx + i + 1], c = r.sd[(j + 1) * r.nx + i], d = r.sd[(j + 1) * r.nx + i + 1];
+  return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
 }
 
 function solve3(A, b) {
@@ -127,7 +147,7 @@ export function isAirportLand(zones, lat, lon) {
     const b = z.bbox;
     if (lat < b.s || lat > b.n || lon < b.w || lon > b.e) continue;
     const x = (lon - z.lon0) * z.kx, y = (lat - z.lat0) * z.ky;
-    if (inPoly(z.poly, x, y)) return true;
+    if (signedDist(z, x, y) <= 0) return true;
     for (const r of z.rwys) {
       const a = (x - r.x1) * r.ux + (y - r.y1) * r.uy;
       const c = Math.abs((x - r.x1) * r.uy - (y - r.y1) * r.ux);
@@ -143,8 +163,9 @@ export function zoneTarget(zones, lat, lon, raw) {
     const b = z.bbox;
     if (lat < b.s || lat > b.n || lon < b.w || lon > b.e) continue;
     const x = (lon - z.lon0) * z.kx, y = (lat - z.lat0) * z.ky;
-    const inside = inPoly(z.poly, x, y);
-    let w = inside ? 1 : 1 - smooth(distPoly(z.poly, x, y) / BAND);
+    const sdv = signedDist(z, x, y);
+    const inside = sdv <= 0;
+    let w = inside ? 1 : 1 - smooth(sdv / BAND);
     // 공항 평면 + 활주로 표고
     let h = z.plane.a + z.plane.b * x + z.plane.c * y;
     let wr = 0, hr = h;
@@ -222,55 +243,144 @@ export class FlatTerrainProvider {
     const rect = this.tilingScheme.tileXYToRectangle(x, y, level);
     const hit = this.zones.some((z) => !(z.bbox.w > rect.east || z.bbox.e < rect.west || z.bbox.s > rect.north || z.bbox.n < rect.south));
     if (!hit) return td;
-    const qv = td._quantizedVertices;
-    const n = qv.length / 3;
-    const minH = td._minimumHeight, maxH = td._maximumHeight;
-    const heights = new Float64Array(n);
-    const flat = new Uint8Array(n);
-    let changed = false, lo = Infinity, hi = -Infinity;
     const W = rect.east - rect.west, H = rect.north - rect.south;
+    const E = this.ellipsoid;
+    // 1) 꼭짓점 목록: 공항 근처 세밀한 타일은 원본 삼각망을 65×65 격자로 다시 만듦
+    //    (바다였던 매립지는 원본 꼭짓점이 드물어 큰 삼각형이 활주로를 가로질러 가운데가 처졌음)
+    let U, V, Hs, indices, edges, grid = 0;
+    const src = decodeMesh(td);
+    if (level >= 11) {
+      grid = 65;
+      const g = regrid(src, grid);
+      U = g.u; V = g.v; Hs = g.h; indices = g.indices; edges = g.edges;
+    } else {
+      U = src.u; V = src.v; Hs = src.h; indices = td._indices;
+      edges = { w: td._westIndices, s: td._southIndices, e: td._eastIndices, n: td._northIndices };
+    }
+    const n = U.length;
+    const flat = new Uint8Array(n);
+    let changed = grid > 0, lo = Infinity, hi = -Infinity;
     for (let i = 0; i < n; i++) {
-      const lon = rect.west + (qv[i] / 32767) * W;
-      const lat = rect.south + (qv[n + i] / 32767) * H;
-      let h = minH + (qv[2 * n + i] / 32767) * (maxH - minH);
+      const lon = rect.west + U[i] * W, lat = rect.south + V[i] * H;
+      let h = Hs[i];
       const t = zoneTarget(this.zones, lat, lon, h);
       if (t) { h = h + (t.h - h) * t.w; changed = true; if (t.w > 0.5) flat[i] = 1; }
-      heights[i] = h;
+      Hs[i] = h;
       if (h < lo) lo = h;
       if (h > hi) hi = h;
     }
     const waterMask = this.clearWater(td._waterMask, rect);
     if (!changed && waterMask === td._waterMask) return td;
-    const out = new Uint16Array(qv);
     const range = Math.max(hi - lo, 0.01);
-    for (let i = 0; i < n; i++) out[2 * n + i] = Math.round(((heights[i] - lo) / range) * 32767);
-    const E = this.ellipsoid;
+    const out = new Uint16Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      out[i] = Math.round(U[i] * 32767);
+      out[n + i] = Math.round(V[i] * 32767);
+      out[2 * n + i] = Math.round(((Hs[i] - lo) / range) * 32767);
+    }
     const pts = [];
     for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 400))) {
-      pts.push(E.cartographicToCartesian(new Cesium.Cartographic(rect.west + (qv[i] / 32767) * W, rect.south + (qv[n + i] / 32767) * H, heights[i])));
+      pts.push(E.cartographicToCartesian(new Cesium.Cartographic(rect.west + U[i] * W, rect.south + V[i] * H, Hs[i])));
     }
     const bs = Cesium.BoundingSphere.fromPoints(pts);
     bs.radius *= 1.05;
     const obb = Cesium.OrientedBoundingBox.fromRectangle(rect, lo, hi, E);
-    // 평탄해진 곳의 법선은 수직
+    // 2) 법선: 격자면 높이로 새로 계산, 아니면 평탄해진 곳만 수직으로
     let normals = td._encodedNormals;
     if (normals) {
-      normals = new Uint8Array(normals);
-      const c2 = new Cesium.Cartesian2(), nrm = new Cesium.Cartesian3(), carto = new Cesium.Cartographic();
-      for (let i = 0; i < n; i++) {
-        if (!flat[i]) continue;
-        carto.longitude = rect.west + (qv[i] / 32767) * W; carto.latitude = rect.south + (qv[n + i] / 32767) * H; carto.height = 0;
-        E.geodeticSurfaceNormalCartographic(carto, nrm);
-        Cesium.AttributeCompression.octEncode(nrm, c2);
-        normals[2 * i] = c2.x; normals[2 * i + 1] = c2.y;
+      normals = grid ? gridNormals(U, V, Hs, grid, rect, E) : new Uint8Array(normals);
+      if (!grid) {
+        const c2 = new Cesium.Cartesian2(), nrm = new Cesium.Cartesian3(), carto = new Cesium.Cartographic();
+        for (let i = 0; i < n; i++) {
+          if (!flat[i]) continue;
+          carto.longitude = rect.west + U[i] * W; carto.latitude = rect.south + V[i] * H; carto.height = 0;
+          E.geodeticSurfaceNormalCartographic(carto, nrm);
+          Cesium.AttributeCompression.octEncode(nrm, c2);
+          normals[2 * i] = c2.x; normals[2 * i + 1] = c2.y;
+        }
       }
     }
     return new Cesium.QuantizedMeshTerrainData({
-      minimumHeight: lo, maximumHeight: hi, quantizedVertices: out, indices: td._indices,
+      minimumHeight: lo, maximumHeight: hi, quantizedVertices: out, indices,
       boundingSphere: bs, orientedBoundingBox: obb, horizonOcclusionPoint: td._horizonOcclusionPoint,
-      westIndices: td._westIndices, southIndices: td._southIndices, eastIndices: td._eastIndices, northIndices: td._northIndices,
+      westIndices: edges.w, southIndices: edges.s, eastIndices: edges.e, northIndices: edges.n,
       westSkirtHeight: td._westSkirtHeight, southSkirtHeight: td._southSkirtHeight, eastSkirtHeight: td._eastSkirtHeight, northSkirtHeight: td._northSkirtHeight,
       childTileMask: td._childTileMask, encodedNormals: normals, waterMask, credits: td._credits,
     });
   }
+}
+
+// 양자화 메시 → u, v(0~1), 높이(m)
+function decodeMesh(td) {
+  const qv = td._quantizedVertices, n = qv.length / 3;
+  const minH = td._minimumHeight, maxH = td._maximumHeight;
+  const u = new Float64Array(n), v = new Float64Array(n), h = new Float64Array(n);
+  for (let i = 0; i < n; i++) { u[i] = qv[i] / 32767; v[i] = qv[n + i] / 32767; h[i] = minH + (qv[2 * n + i] / 32767) * (maxH - minH); }
+  return { u, v, h, idx: td._indices };
+}
+
+// 원본 삼각망을 N×N 격자로 다시 샘플링 (삼각형 버킷으로 빠르게 위치 찾기)
+function regrid(src, N) {
+  const { u, v, h, idx } = src;
+  const B = 24;
+  const buckets = Array.from({ length: B * B }, () => []);
+  for (let t = 0; t < idx.length; t += 3) {
+    const a = idx[t], b = idx[t + 1], c = idx[t + 2];
+    const u0 = Math.min(u[a], u[b], u[c]), u1 = Math.max(u[a], u[b], u[c]);
+    const v0 = Math.min(v[a], v[b], v[c]), v1 = Math.max(v[a], v[b], v[c]);
+    const i0 = Math.max(0, Math.floor(u0 * B)), i1 = Math.min(B - 1, Math.floor(u1 * B));
+    const j0 = Math.max(0, Math.floor(v0 * B)), j1 = Math.min(B - 1, Math.floor(v1 * B));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) buckets[j * B + i].push(t);
+  }
+  const heightAt = (x, y) => {
+    const list = buckets[Math.min(B - 1, Math.floor(y * B)) * B + Math.min(B - 1, Math.floor(x * B))];
+    let best = null, bestErr = Infinity;
+    for (const t of list) {
+      const a = idx[t], b = idx[t + 1], c = idx[t + 2];
+      const d = (v[b] - v[c]) * (u[a] - u[c]) + (u[c] - u[b]) * (v[a] - v[c]);
+      if (Math.abs(d) < 1e-14) continue;
+      const l1 = ((v[b] - v[c]) * (x - u[c]) + (u[c] - u[b]) * (y - v[c])) / d;
+      const l2 = ((v[c] - v[a]) * (x - u[c]) + (u[a] - u[c]) * (y - v[c])) / d;
+      const l3 = 1 - l1 - l2;
+      const err = Math.max(0, -l1, -l2, -l3);
+      if (err < bestErr) { bestErr = err; best = l1 * h[a] + l2 * h[b] + l3 * h[c]; if (err === 0) break; }
+    }
+    return best ?? 0;
+  };
+  const n = N * N;
+  const gu = new Float64Array(n), gv = new Float64Array(n), gh = new Float64Array(n);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    gu[k] = i / (N - 1); gv[k] = j / (N - 1);
+    gh[k] = heightAt(gu[k], gv[k]);
+  }
+  const indices = new Uint16Array((N - 1) * (N - 1) * 6);
+  let p = 0;
+  for (let j = 0; j < N - 1; j++) for (let i = 0; i < N - 1; i++) {
+    const a = j * N + i, b = a + 1, c = a + N + 1, d = a + N;
+    indices[p++] = a; indices[p++] = b; indices[p++] = c;
+    indices[p++] = a; indices[p++] = c; indices[p++] = d;
+  }
+  const w = [], s = [], e = [], nn = [];
+  for (let k = 0; k < N; k++) { w.push(k * N); e.push(k * N + N - 1); s.push(k); nn.push((N - 1) * N + k); }
+  return { u: gu, v: gv, h: gh, indices, edges: { w: new Uint16Array(w), s: new Uint16Array(s), e: new Uint16Array(e), n: new Uint16Array(nn) } };
+}
+
+// 격자 꼭짓점 법선 (지구 중심 좌표, 8방위 압축)
+function gridNormals(U, V, Hs, N, rect, E) {
+  const W = rect.east - rect.west, H = rect.north - rect.south;
+  const P = new Array(N * N);
+  for (let k = 0; k < N * N; k++) P[k] = E.cartographicToCartesian(new Cesium.Cartographic(rect.west + U[k] * W, rect.south + V[k] * H, Hs[k]));
+  const out = new Uint8Array(N * N * 2);
+  const ex = new Cesium.Cartesian3(), ny = new Cesium.Cartesian3(), nrm = new Cesium.Cartesian3(), c2 = new Cesium.Cartesian2();
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    const iL = Math.max(0, i - 1), iR = Math.min(N - 1, i + 1), jD = Math.max(0, j - 1), jU = Math.min(N - 1, j + 1);
+    Cesium.Cartesian3.subtract(P[j * N + iR], P[j * N + iL], ex);
+    Cesium.Cartesian3.subtract(P[jU * N + i], P[jD * N + i], ny);
+    Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(ex, ny, nrm), nrm);
+    Cesium.AttributeCompression.octEncode(nrm, c2);
+    out[2 * k] = c2.x; out[2 * k + 1] = c2.y;
+  }
+  return out;
 }

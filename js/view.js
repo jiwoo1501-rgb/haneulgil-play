@@ -1,10 +1,10 @@
 /* global Cesium */
 // Cesium 화면: 지구·지형·건물, 항공기 모델, 조명, 카메라 시점, PAPI
-import { CESIUM_TOKEN } from './config.js?v=202609291349';
-import { v3, quat, enu, geodeticToEcef, ecefToGeodetic, DEG, clamp, angDiff, destPoint } from './geo.js?v=202609291349';
-import { rwyRel } from './nav.js?v=202609291349';
-import { FlatTerrainProvider, sampleRunway, buildAirportZone } from './flatten.js?v=202609291349';
-import { AIRPORT_AREAS } from '../data/airport-areas.js?v=202609291349';
+import { CESIUM_TOKEN } from './config.js?v=202609291420';
+import { v3, quat, enu, geodeticToEcef, ecefToGeodetic, DEG, clamp, angDiff, destPoint } from './geo.js?v=202609291420';
+import { rwyRel } from './nav.js?v=202609291420';
+import { FlatTerrainProvider, sampleRunway, buildAirportZone } from './flatten.js?v=202609291420';
+import { AIRPORT_AREAS } from '../data/airport-areas.js?v=202609291420';
 
 const C3 = (a) => new Cesium.Cartesian3(a[0], a[1], a[2]);
 
@@ -16,6 +16,30 @@ const QUALITY = {
 };
 const gltfToBody = (p) => [p[2], -p[0], -p[1]];
 const SQ = new Cesium.Quaternion(), SM3 = new Cesium.Matrix3(), SM4 = new Cesium.Matrix4();
+
+// 부드러운 원형 입자 이미지
+function puffImage() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)');
+  r.addColorStop(0.45, 'rgba(255,255,255,0.55)');
+  r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r;
+  g.fillRect(0, 0, 64, 64);
+  return c;
+}
+
+// 입자 방출기 자세: 방출기 +Z축을 모델 좌표(glTF) 방향 dir로, 위치 pos로
+function emitterMatrix(pos, dir) {
+  const z = Cesium.Cartesian3.normalize(new Cesium.Cartesian3(dir[0], dir[1], dir[2]), new Cesium.Cartesian3());
+  const ref = Math.abs(z.y) < 0.9 ? Cesium.Cartesian3.UNIT_Y : Cesium.Cartesian3.UNIT_X;
+  const x = Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(ref, z, new Cesium.Cartesian3()), new Cesium.Cartesian3());
+  const y = Cesium.Cartesian3.cross(z, x, new Cesium.Cartesian3());
+  const rot = new Cesium.Matrix3(x.x, y.x, z.x, x.y, y.y, z.y, x.z, y.z, z.z);
+  return Cesium.Matrix4.fromRotationTranslation(rot, new Cesium.Cartesian3(pos[0], pos[1], pos[2]));
+}
 
 export class View {
   // runways: 모든 활주로 끝 기하 (양방향). 지형 측정 → 평탄화 지형 제공자 생성 후 화면 생성
@@ -201,7 +225,97 @@ export class View {
       } catch (e) { /* 없는 노드 */ }
     }
     this.makeLights(meta);
+    this.makeEffects(meta);
     return model;
+  }
+
+  // ---------- 엔진 배기·비행운·역추력·타이어 연기 (입자) ----------
+  makeEffects(meta) {
+    if (this.fx) for (const p of this.fx.all) this.scene.primitives.remove(p);
+    this.fx = { all: [], eng: [], rev: [], tire: [] };
+    if (!meta) return;
+    const img = this.puff || (this.puff = puffImage());
+    const mk = (pos, dir, o = {}) => {
+      const ps = new Cesium.ParticleSystem({
+        image: img, sizeInMeters: true, imageSize: new Cesium.Cartesian2(1, 1),
+        startColor: new Cesium.Color(1, 1, 1, 0), endColor: new Cesium.Color(1, 1, 1, 0),
+        startScale: 2, endScale: 6, minimumParticleLife: 0.6, maximumParticleLife: 1.0,
+        minimumSpeed: 20, maximumSpeed: 40, emissionRate: 0, lifetime: 30, loop: true,
+        emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(o.cone ?? 4)),
+        emitterModelMatrix: emitterMatrix(pos, dir),
+        modelMatrix: Cesium.Matrix4.IDENTITY,
+      });
+      this.scene.primitives.add(ps);
+      this.fx.all.push(ps);
+      return ps;
+    };
+    for (const pod of meta.enginePods || []) {
+      this.fx.eng.push(mk(pod.exhaust, [0, 0, -1], { cone: 3 }));
+      // 역추력: 나셀 중간에서 앞·바깥쪽으로
+      const mid = [(pod.intake[0] + pod.exhaust[0]) / 2, (pod.intake[1] + pod.exhaust[1]) / 2, (pod.intake[2] + pod.exhaust[2]) / 2];
+      const side = Math.sign(pod.exhaust[0]) || 1;
+      this.fx.rev.push(mk(mid, [0.55 * side, 0.25, 0.8], { cone: 25 }));
+    }
+    for (const g of meta.gear?.mains || []) this.fx.tire.push(mk(g.contact, [0, 0.5, -0.87], { cone: 35 }));
+    this.tireT = -1;
+  }
+
+  tireSmoke(sink = 1) { this.tireT = 0; this.tireAmt = Math.min(1.5, 0.5 + sink / 2); }
+
+  updateEffects(fm, m, dt) {
+    if (!this.fx) return;
+    const d = fm.d;
+    const alt = d.hMsl;
+    const n1 = Math.pow(Math.max(fm.spool, 0), 0.4);
+    const V = d.V;
+    // 비행운: 약 8,000m(26,000ft) 이상, 추력이 있을 때
+    const con = Math.max(0, Math.min(1, (alt - 7800) / 800)) * Math.min(1, fm.spool * 3);
+    const onGnd = fm.onGround;
+    for (const ps of this.fx.eng) {
+      ps.modelMatrix = m;
+      if (con > 0.05) {
+        ps.emissionRate = 80 * con;
+        ps.startColor = new Cesium.Color(1, 1, 1, 0.5 * con);
+        ps.endColor = new Cesium.Color(1, 1, 1, 0);
+        ps.minimumParticleLife = 6; ps.maximumParticleLife = 10;
+        ps.minimumSpeed = 1; ps.maximumSpeed = 4;
+        ps.startScale = 4; ps.endScale = 22;
+      } else {
+        // 배기 바람: 추력이 클수록 진하고 멀리, 속도가 빠를수록 짧게 흩어짐
+        const k = Math.max(0, (n1 - 0.45) / 0.55) * (alt < 4000 ? 1 : 0.4);
+        ps.emissionRate = 70 * k;
+        ps.startColor = new Cesium.Color(0.92, 0.93, 0.95, (onGnd ? 0.22 : 0.12) * k);
+        ps.endColor = new Cesium.Color(0.85, 0.86, 0.88, 0);
+        const life = Math.max(0.35, 1.3 - V / 120);
+        ps.minimumParticleLife = life * 0.6; ps.maximumParticleLife = life;
+        ps.minimumSpeed = 20 + 60 * k; ps.maximumSpeed = 40 + 120 * k;
+        ps.startScale = 1.2; ps.endScale = onGnd ? 9 : 6;
+      }
+    }
+    // 역추력: 앞쪽으로 뿜어지는 공기·물보라
+    const rk = fm.rev > 0.5 ? Math.max(0, n1 - 0.3) / 0.7 * Math.min(1, V / 30) : 0;
+    for (const ps of this.fx.rev) {
+      ps.modelMatrix = m;
+      ps.emissionRate = 90 * rk;
+      ps.startColor = new Cesium.Color(0.9, 0.9, 0.9, 0.3 * rk);
+      ps.endColor = new Cesium.Color(0.8, 0.8, 0.8, 0);
+      ps.minimumParticleLife = 0.5; ps.maximumParticleLife = 1.1;
+      ps.minimumSpeed = 25; ps.maximumSpeed = 55;
+      ps.startScale = 1.5; ps.endScale = 7;
+    }
+    // 타이어 연기: 접지 순간 0.5초
+    if (this.tireT >= 0) this.tireT += dt;
+    const tk = this.tireT >= 0 && this.tireT < 0.5 ? this.tireAmt : 0;
+    if (this.tireT > 3) this.tireT = -1;
+    for (const ps of this.fx.tire) {
+      ps.modelMatrix = m;
+      ps.emissionRate = 160 * tk;
+      ps.startColor = new Cesium.Color(0.85, 0.85, 0.85, 0.5);
+      ps.endColor = new Cesium.Color(0.8, 0.8, 0.8, 0);
+      ps.minimumParticleLife = 1.2; ps.maximumParticleLife = 2.2;
+      ps.minimumSpeed = 2; ps.maximumSpeed = 6;
+      ps.startScale = 1; ps.endScale = 5;
+    }
   }
 
   makeLights(meta) {
@@ -247,6 +361,9 @@ export class View {
       m[12] = p[0]; m[13] = p[1]; m[14] = p[2]; m[15] = 1;
       this.model.modelMatrix = m;
       this.animate(fm, sim);
+      const now = performance.now();
+      this.updateEffects(fm, m, Math.min(0.1, (now - (this._fxT || now)) / 1000));
+      this._fxT = now;
     }
     // 조명
     const night = this.night;

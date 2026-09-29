@@ -1,12 +1,12 @@
 // 시뮬레이션 묶음: 물리 + 비행제어 + 자동조종 + 자동비행 + 조종사 입력
-import { FlightModel } from './physics.js?v=202609291349';
-import { FlightControl } from './fbw.js?v=202609291349';
-import { Autopilot } from './autopilot.js?v=202609291349';
-import { AutoFlight } from './fms.js?v=202609291349';
-import { DEG, KT, FT, NM, FPM, clamp, destPoint, distBrg } from './geo.js?v=202609291349';
-import { rwyRel, rwySurfaceH, finalFix, GS_ANGLE, GPI, toMag } from './nav.js?v=202609291349';
-import { planWeights } from '../data/aircraft.js?v=202609291349';
-import { thrustLapse } from './physics.js?v=202609291349';
+import { FlightModel } from './physics.js?v=202609291420';
+import { FlightControl } from './fbw.js?v=202609291420';
+import { Autopilot } from './autopilot.js?v=202609291420';
+import { AutoFlight } from './fms.js?v=202609291420';
+import { DEG, KT, FT, NM, FPM, clamp, destPoint, distBrg } from './geo.js?v=202609291420';
+import { rwyRel, rwySurfaceH, finalFix, GS_ANGLE, GPI, toMag } from './nav.js?v=202609291420';
+import { planWeights } from '../data/aircraft.js?v=202609291420';
+import { thrustLapse } from './physics.js?v=202609291420';
 
 const G0 = 9.80665;
 
@@ -125,12 +125,14 @@ export class Sim {
       case 'parking': fm.parking = !fm.parking; break;
       case 'reverse': this.reverse = fm.onGround ? !this.reverse : false; if (this.reverse) this.lever = 0; break;
       case 'throttle':
-        if (ap.at) { ap.at = false; this.emit('atoff'); }
-        this.lever = clamp(this.lever + arg, 0, 1);
-        break;
       case 'lever':
         if (ap.at) { ap.at = false; this.emit('atoff'); }
-        this.lever = clamp(arg, 0, 1);
+        this.lever = clamp(name === 'lever' ? arg : this.lever + arg, 0, 1);
+        // 출발: 정지 상태에서 추력을 올리면 역추력 해제, 주차 브레이크 자동 해제
+        if (fm.onGround && fm.d.gs < 5 * KT && (name === 'lever' || arg > 0)) {
+          if (this.reverse) { this.reverse = false; this.emit('revoff'); }
+          if (fm.parking && this.lever >= 0.45) { fm.parking = false; this.emit('parkoff'); }
+        }
         break;
       case 'toga': this.lever = 1; if (ap.at) ap.thr = 'TOGA'; break;
       case 'ap':

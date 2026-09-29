@@ -3,8 +3,8 @@
 // 병진운동: 양력·항력·측력·추력·중력·지면반력을 모두 계산해 적분(물리)
 // 회전운동: 비행제어컴퓨터(fbw.js)가 요구한 각속도를 1차 지연으로 따라감
 
-import { v3, quat, enu, ecefToGeodetic, geodeticToEcef, attitudeToQuat, quatToAttitude, DEG, KT, clamp } from './geo.js?v=202609291349';
-import { isa, tasToCas, RHO0 } from './atmosphere.js?v=202609291349';
+import { v3, quat, enu, ecefToGeodetic, geodeticToEcef, attitudeToQuat, quatToAttitude, DEG, KT, clamp } from './geo.js?v=202609291420';
+import { isa, tasToCas, RHO0 } from './atmosphere.js?v=202609291420';
 
 const G0 = 9.80665;
 const LB_PER_LBFH = 2.8325e-5; // 1 lb/(lbf·h) = kg/(N·s)
@@ -406,12 +406,15 @@ export class FlightModel {
     this.hNose = hOf(this.noseC);
     d.gearAlt = d.h - d.hAGL + hOf(this.mainAvg);  // 주 바퀴의 타원체 높이
     d.ra = Math.max(0, Math.min(this.hMain, this.hNose));
+    // 계기 고도(해발)는 주 바퀴 기준 — 활주로에 서 있으면 공항 공식 표고와 같게 읽힘
+    d.hMsl = d.gearAlt - (this._N ?? 0);
   }
 
   derive() {
     const g = ecefToGeodetic(this.p);
     const { e, n, u } = enu(g.lat, g.lon);
     const N = this.env.geoidN ? this.env.geoidN(g.lat, g.lon) : 0;
+    this._N = N;
     const hMsl = g.h - N;
     const atm = isa(hMsl);
     const ground = this.env.groundHeight(g.lat, g.lon);

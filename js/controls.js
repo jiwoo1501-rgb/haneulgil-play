@@ -1,5 +1,5 @@
 // 조작 입력: 키보드 · 게임패드 · 터치
-import { clamp } from './geo.js?v=202609291349';
+import { clamp } from './geo.js?v=202609291420';
 
 export class Controls {
   constructor(onAction) {
@@ -16,7 +16,8 @@ export class Controls {
 
   keydown(e) {
     if (!this.enabled) return;
-    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+    // 보이는 입력칸에서 타이핑할 때만 무시 (메뉴를 닫은 뒤 선택 상자에 초점이 남아도 조종은 되게)
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') && e.target.offsetParent) return;
     const k = e.code;
     const flight = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab', 'PageUp', 'PageDown', 'Slash', 'F1'];
     if (flight.includes(k)) e.preventDefault();
@@ -135,6 +136,7 @@ export class Controls {
           else if (a === 'flaps-') this.onAction('flaps', -1);
           else if (a === 'rev') this.onAction('reverse');
           else if (a === 'auto') this.onAction('auto');
+          else if (a === 'park') this.onAction('parking');
         });
       }
     }

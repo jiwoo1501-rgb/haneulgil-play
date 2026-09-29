@@ -1,16 +1,16 @@
 /* global Cesium */
 // 하늘길 — 메뉴 · 비행 준비 · 게임 루프 · 계기/패널 연결
-import { AIRCRAFT, AIRCRAFT_ORDER, planWeights } from '../data/aircraft.js?v=202609291349';
-import { AIRPORTS, ROUTES } from '../data/airports.js?v=202609291349';
-import { View } from './view.js?v=202609291349';
-import { Hud } from './hud.js?v=202609291349';
-import { Controls } from './controls.js?v=202609291349';
-import { Audio } from './audio.js?v=202609291349';
-import { Sim, makeEnv } from './sim.js?v=202609291349';
-import { runwayGeom, rwyRel, finalFix, toMag, toTrue } from './nav.js?v=202609291349';
-import { scoreLanding } from './score.js?v=202609291349';
-import { DEG, KT, FT, FPM, NM, clamp, distBrg, angDiff } from './geo.js?v=202609291349';
-import { machToCas } from './atmosphere.js?v=202609291349';
+import { AIRCRAFT, AIRCRAFT_ORDER, planWeights } from '../data/aircraft.js?v=202609291420';
+import { AIRPORTS, ROUTES } from '../data/airports.js?v=202609291420';
+import { View } from './view.js?v=202609291420';
+import { Hud } from './hud.js?v=202609291420';
+import { Controls } from './controls.js?v=202609291420';
+import { Audio } from './audio.js?v=202609291420';
+import { Sim, makeEnv } from './sim.js?v=202609291420';
+import { runwayGeom, rwyRel, finalFix, toMag, toTrue } from './nav.js?v=202609291420';
+import { scoreLanding } from './score.js?v=202609291420';
+import { DEG, KT, FT, FPM, NM, clamp, distBrg, angDiff } from './geo.js?v=202609291420';
+import { machToCas } from './atmosphere.js?v=202609291420';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -108,7 +108,7 @@ async function ensureView(msg) {
       return { lat: a.lat * DEG, lon: a.lon * DEG, N: gs.reduce((s, g) => s + g.geoidN, 0) / gs.length };
     });
     view.viewer.scene.preUpdate.addEventListener(frame);
-    try { meta = await (await fetch('models/models.json?v=202609291349', { cache: 'no-cache' })).json(); } catch { meta = {}; }
+    try { meta = await (await fetch('models/models.json?v=202609291420', { cache: 'no-cache' })).json(); } catch { meta = {}; }
   }
   await viewReady;
   return Object.values(runways);
@@ -149,6 +149,7 @@ async function startFlight() {
     return;
   }
   audio.start();
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   $('menu').hidden = true;
   $('result').hidden = true; $('pause').hidden = true;
   $('loading').hidden = false;
@@ -180,7 +181,7 @@ async function startFlight() {
     const m = meta[ac.id];
     sim = new Sim({ ac, meta: m, env, dep, dest, cruiseFt, start, routeKm });
     scenario = { ac, dep, dest, cruiseFt, label, start };
-    try { await view.loadAircraft(ac.model + '?v=' + (m?.version || '202609291349'), m); } catch (e) { console.warn('모델 없음', e); }
+    try { await view.loadAircraft(ac.model + '?v=' + (m?.version || '202609291420'), m); } catch (e) { console.warn('모델 없음', e); }
     if (dest) view.makePapi(dest);
     view.makeRunwayLights(all);
     towerCache = null;
@@ -200,7 +201,7 @@ async function startFlight() {
     document.body.classList.toggle('touch', isTouch());
     $('touch').hidden = !isTouch();
     if (start === 'runway') {
-      flash(sim.ac.family === 'airbus' ? '출발 준비 완료 — [자동비행] 또는 추력 올리고(+) 주차브레이크 해제(P)' : '출발 준비 완료 — [자동비행] 또는 추력 올리고(+) 주차브레이크 해제(P)', '', 7000);
+      flash('출발 준비 완료 — [자동비행] 또는 추력 최대(Home / + 길게, 주차 브레이크 자동 해제)', '', 7000);
     } else flash('최종접근 10NM — 활공각을 따라 내려가세요. 자동착륙: [자동비행]', '', 6000);
   } catch (e) {
     console.error(e);
@@ -485,6 +486,7 @@ function handleEvents(events) {
     if (e.type === 'touchdown') {
       const g = findRunwayAt(e.lat, e.lon) || sim.ap.dest;
       landing = { td: e, rwy: g };
+      view.tireSmoke(e.sink);
       if (e.fpm > 600) flash(`강한 착지 ${Math.round(e.fpm)} ft/min`, 'warn');
     } else if (e.type === 'liftoff') {
       if (landing && !resultShown) { landing = null; flash('터치 앤 고'); }
@@ -494,6 +496,10 @@ function handleEvents(events) {
       flash('꼬리가 활주로에 닿았습니다 (TAIL STRIKE)', 'bad', 4000);
     } else if (e.type === 'apoff' && e.reason === 'stick') {
       audio.apOff(fm.ac.family); flash('조종간 입력 — 자동조종 해제', 'warn');
+    } else if (e.type === 'parkoff') {
+      flash('추력 증가 — 주차 브레이크 자동 해제');
+    } else if (e.type === 'revoff') {
+      flash('역추력 해제');
     } else if (e.type === 'afloor') {
       flash('A.FLOOR — 자동 최대추력', 'bad', 3000);
     }
@@ -587,8 +593,22 @@ function frame() {
   if (uiT > 0.15) {
     uiT = 0;
     if (!document.body.classList.contains('hide-panel')) { updatePanel(); updateInfo(); }
+    updateLamps();
     controls.updateTouchUi && controls.updateTouchUi();
   }
+}
+
+// 상태 표시등: 주차 브레이크·브레이크·자동브레이크·역추력·스피드브레이크
+function updateLamps() {
+  const fm = sim.fm;
+  const set = (id, cls, text) => { const el = $(id); el.className = 'lamp' + (cls ? ' ' + cls : ''); if (text) el.textContent = text; };
+  set('lamp-park', fm.parking ? 'red' : '', fm.parking ? '주차 브레이크 켜짐' : '주차 브레이크 꺼짐');
+  const br = fm.brakeOut || 0;
+  set('lamp-brake', !fm.parking && br > 0.05 ? 'amber' : '', !fm.parking && br > 0.05 ? `브레이크 ${Math.round(br * 100)}%` : '브레이크 꺼짐');
+  const ab = ['끔', 'LO', 'MED', 'MAX', 'RTO'][fm.autobrake];
+  set('lamp-ab', fm.abActive ? 'amber' : fm.autobrake ? 'arm' : '', fm.abActive ? `자동브레이크 ${ab} 작동` : `자동브레이크 ${ab}`);
+  set('lamp-rev', fm.rev > 0.95 ? 'green' : fm.rev > 0.05 ? 'amber' : '', fm.rev > 0.05 ? '역추력 켜짐' : '역추력 꺼짐');
+  set('lamp-sb', fm.spoiler > 0.1 ? 'amber' : '', fm.spoiler > 0.1 ? `스피드브레이크 ${Math.round(fm.spoiler * 100)}%` : '스피드브레이크 접힘');
 }
 
 function updateInfo() {

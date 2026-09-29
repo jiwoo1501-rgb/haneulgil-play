@@ -1,8 +1,8 @@
 // 계기판 (캔버스): PFD(주비행표시) · ND(항법표시) · EICAS(엔진·장치)
-import { DEG, KT, FT, FPM, NM, clamp, angDiff, distBrg } from './geo.js?v=202609291349';
-import { toMag, rwyRel } from './nav.js?v=202609291349';
-import { AIRPORTS } from '../data/airports.js?v=202609291349';
-import { machToCas } from './atmosphere.js?v=202609291349';
+import { DEG, KT, FT, FPM, NM, clamp, angDiff, distBrg } from './geo.js?v=202609291420';
+import { toMag, rwyRel } from './nav.js?v=202609291420';
+import { AIRPORTS } from '../data/airports.js?v=202609291420';
+import { machToCas } from './atmosphere.js?v=202609291420';
 
 const FONT = "'B612 Mono', Menlo, monospace";
 const MAG = '#ff5cf0', CYAN = '#3ad7ff', GREEN = '#3dff8f', AMBER = '#ffb020', RED = '#ff3b3b', WHITE = '#f4f7fb';
