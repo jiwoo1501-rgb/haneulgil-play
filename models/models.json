@@ -1,0 +1,1302 @@
+{
+  "ke-b77w": {
+    "file": "ke-b77w.glb",
+    "name": "Korean Air Boeing 777-300ER",
+    "dims": {
+      "length": 73.86,
+      "span": 64.8,
+      "height": 18.5
+    },
+    "pilotEye": [
+      0.55,
+      1.08,
+      29.389
+    ],
+    "gear": {
+      "mains": [
+        {
+          "node": "gear_main_L",
+          "contact": [
+            5.485,
+            -5.45,
+            -2.841
+          ]
+        },
+        {
+          "node": "gear_main_R",
+          "contact": [
+            -5.485,
+            -5.45,
+            -2.841
+          ]
+        }
+      ],
+      "nose": {
+        "contact": [
+          0,
+          -5.45,
+          28.369
+        ]
+      }
+    },
+    "tailStrikeDeg": 8.1,
+    "tailContact": [
+      0,
+      -2.575,
+      -23.026
+    ],
+    "wingtips": {
+      "L": [
+        32.4,
+        1.648,
+        -13.331
+      ],
+      "R": [
+        -32.4,
+        1.648,
+        -13.331
+      ]
+    },
+    "enginePods": [
+      {
+        "exhaust": [
+          9.85,
+          -2.805,
+          1.177
+        ],
+        "intake": [
+          9.85,
+          -2.805,
+          7.977
+        ],
+        "radius": 1.98,
+        "lowestPoint": [
+          9.85,
+          -4.785,
+          5.868
+        ]
+      },
+      {
+        "exhaust": [
+          -9.85,
+          -2.805,
+          1.177
+        ],
+        "intake": [
+          -9.85,
+          -2.805,
+          7.977
+        ],
+        "radius": 1.98,
+        "lowestPoint": [
+          -9.85,
+          -4.785,
+          5.868
+        ]
+      }
+    ],
+    "lights": {
+      "navL": [
+        32.295,
+        1.694,
+        -13.233
+      ],
+      "navR": [
+        -32.295,
+        1.694,
+        -13.233
+      ],
+      "tail": [
+        0,
+        1.35,
+        -40.091
+      ],
+      "beaconTop": [
+        0,
+        3.18,
+        1.159
+      ],
+      "beaconBottom": [
+        0,
+        -3.16,
+        20.369
+      ],
+      "strobeL": [
+        32.295,
+        1.694,
+        -13.583
+      ],
+      "strobeR": [
+        -32.295,
+        1.694,
+        -13.583
+      ],
+      "landingL": [
+        4.43,
+        -1.596,
+        6.675
+      ],
+      "landingR": [
+        -4.43,
+        -1.596,
+        6.675
+      ]
+    },
+    "animations": [
+      {
+        "node": "flap_in_L",
+        "kind": "flap",
+        "axis": [
+          -0.97,
+          -0.157,
+          0.187
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_L",
+        "kind": "flap",
+        "axis": [
+          -0.887,
+          -0.107,
+          0.448
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_L",
+        "kind": "spoiler",
+        "axis": [
+          0.878,
+          0.086,
+          -0.47
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_L",
+        "kind": "aileron",
+        "axis": [
+          -0.891,
+          -0.096,
+          0.444
+        ],
+        "angle": 25
+      },
+      {
+        "node": "flap_in_R",
+        "kind": "flap",
+        "axis": [
+          -0.97,
+          0.157,
+          -0.187
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_R",
+        "kind": "flap",
+        "axis": [
+          -0.887,
+          0.107,
+          -0.448
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_R",
+        "kind": "spoiler",
+        "axis": [
+          0.878,
+          -0.086,
+          0.47
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_R",
+        "kind": "aileron",
+        "axis": [
+          -0.891,
+          0.096,
+          -0.444
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_L",
+        "kind": "elevator",
+        "axis": [
+          -0.909,
+          -0.106,
+          0.404
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_R",
+        "kind": "elevator",
+        "axis": [
+          -0.909,
+          0.106,
+          -0.404
+        ],
+        "angle": 25
+      },
+      {
+        "node": "rudder",
+        "kind": "rudder",
+        "axis": [
+          0,
+          -0.846,
+          0.533
+        ],
+        "angle": 30
+      },
+      {
+        "node": "gear_nose",
+        "kind": "gear",
+        "axis": [
+          -1,
+          0,
+          0
+        ],
+        "angle": 100
+      },
+      {
+        "node": "gear_main_L",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          -1
+        ],
+        "angle": 90
+      },
+      {
+        "node": "gear_main_R",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "angle": 90
+      }
+    ],
+    "reference": {
+      "note": "origin = 25% MAC on the fuselage axis; +Y up, +Z nose, +X left wing; metres",
+      "macLength": 8.346,
+      "macLE": [
+        11.549,
+        -0.506,
+        2.087
+      ],
+      "wingArea": 427.8,
+      "noseTip": [
+        0,
+        -0.72,
+        33.689
+      ],
+      "tailTip": [
+        0,
+        1.35,
+        -40.171
+      ],
+      "engines": "GE90-115B"
+    }
+  },
+  "oz-b772": {
+    "file": "oz-b772.glb",
+    "name": "Asiana Airlines Boeing 777-200ER",
+    "dims": {
+      "length": 63.73,
+      "span": 60.93,
+      "height": 18.5
+    },
+    "pilotEye": [
+      0.55,
+      1.08,
+      24.058
+    ],
+    "gear": {
+      "mains": [
+        {
+          "node": "gear_main_L",
+          "contact": [
+            5.485,
+            -5.45,
+            -2.842
+          ]
+        },
+        {
+          "node": "gear_main_R",
+          "contact": [
+            -5.485,
+            -5.45,
+            -2.842
+          ]
+        }
+      ],
+      "nose": {
+        "contact": [
+          0,
+          -5.45,
+          23.038
+        ]
+      }
+    },
+    "tailStrikeDeg": 10.3,
+    "tailContact": [
+      0,
+      -1.743,
+      -23.307
+    ],
+    "wingtips": {
+      "L": [
+        30.465,
+        1.386,
+        -11.172
+      ],
+      "R": [
+        -30.465,
+        1.386,
+        -11.172
+      ]
+    },
+    "enginePods": [
+      {
+        "exhaust": [
+          9.85,
+          -2.735,
+          1.124
+        ],
+        "intake": [
+          9.85,
+          -2.735,
+          7.524
+        ],
+        "radius": 1.72,
+        "lowestPoint": [
+          9.85,
+          -4.455,
+          5.643
+        ]
+      },
+      {
+        "exhaust": [
+          -9.85,
+          -2.735,
+          1.124
+        ],
+        "intake": [
+          -9.85,
+          -2.735,
+          7.524
+        ],
+        "radius": 1.72,
+        "lowestPoint": [
+          -9.85,
+          -4.455,
+          5.643
+        ]
+      }
+    ],
+    "lights": {
+      "navL": [
+        30.353,
+        1.5,
+        -10.95
+      ],
+      "navR": [
+        -30.353,
+        1.5,
+        -10.95
+      ],
+      "tail": [
+        0,
+        1.35,
+        -35.292
+      ],
+      "beaconTop": [
+        0,
+        3.18,
+        1.158
+      ],
+      "beaconBottom": [
+        0,
+        -3.16,
+        15.038
+      ],
+      "strobeL": [
+        30.353,
+        1.5,
+        -11.3
+      ],
+      "strobeR": [
+        -30.353,
+        1.5,
+        -11.3
+      ],
+      "landingL": [
+        4.43,
+        -1.596,
+        6.673
+      ],
+      "landingR": [
+        -4.43,
+        -1.596,
+        6.673
+      ]
+    },
+    "animations": [
+      {
+        "node": "flap_in_L",
+        "kind": "flap",
+        "axis": [
+          -0.97,
+          -0.157,
+          0.187
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_L",
+        "kind": "flap",
+        "axis": [
+          -0.888,
+          -0.107,
+          0.448
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_L",
+        "kind": "spoiler",
+        "axis": [
+          0.878,
+          0.086,
+          -0.47
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_L",
+        "kind": "aileron",
+        "axis": [
+          -0.891,
+          -0.096,
+          0.444
+        ],
+        "angle": 25
+      },
+      {
+        "node": "flap_in_R",
+        "kind": "flap",
+        "axis": [
+          -0.97,
+          0.157,
+          -0.187
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_R",
+        "kind": "flap",
+        "axis": [
+          -0.888,
+          0.107,
+          -0.448
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_R",
+        "kind": "spoiler",
+        "axis": [
+          0.878,
+          -0.086,
+          0.47
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_R",
+        "kind": "aileron",
+        "axis": [
+          -0.891,
+          0.096,
+          -0.444
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_L",
+        "kind": "elevator",
+        "axis": [
+          -0.909,
+          -0.106,
+          0.404
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_R",
+        "kind": "elevator",
+        "axis": [
+          -0.909,
+          0.106,
+          -0.404
+        ],
+        "angle": 25
+      },
+      {
+        "node": "rudder",
+        "kind": "rudder",
+        "axis": [
+          0,
+          -0.847,
+          0.532
+        ],
+        "angle": 30
+      },
+      {
+        "node": "gear_nose",
+        "kind": "gear",
+        "axis": [
+          -1,
+          0,
+          0
+        ],
+        "angle": 100
+      },
+      {
+        "node": "gear_main_L",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          -1
+        ],
+        "angle": 90
+      },
+      {
+        "node": "gear_main_R",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "angle": 90
+      }
+    ],
+    "reference": {
+      "note": "origin = 25% MAC on the fuselage axis; +Y up, +Z nose, +X left wing; metres",
+      "macLength": 8.349,
+      "macLE": [
+        11.544,
+        -0.507,
+        2.087
+      ],
+      "wingArea": 427.8,
+      "noseTip": [
+        0,
+        -0.72,
+        28.358
+      ],
+      "tailTip": [
+        0,
+        1.35,
+        -35.372
+      ],
+      "engines": "PW4090"
+    }
+  },
+  "oz-a359": {
+    "file": "oz-a359.glb",
+    "name": "Asiana Airlines Airbus A350-900",
+    "dims": {
+      "length": 66.8,
+      "span": 64.75,
+      "height": 17.05
+    },
+    "pilotEye": [
+      0.55,
+      1.15,
+      25.577
+    ],
+    "gear": {
+      "mains": [
+        {
+          "node": "gear_main_L",
+          "contact": [
+            5.3,
+            -5.3,
+            -3.843
+          ]
+        },
+        {
+          "node": "gear_main_R",
+          "contact": [
+            -5.3,
+            -5.3,
+            -3.843
+          ]
+        }
+      ],
+      "nose": {
+        "contact": [
+          0,
+          -5.3,
+          24.827
+        ]
+      }
+    },
+    "tailStrikeDeg": 10.3,
+    "tailContact": [
+      0,
+      -1.108,
+      -26.868
+    ],
+    "wingtips": {
+      "L": [
+        32.375,
+        4.952,
+        -17.939
+      ],
+      "R": [
+        -32.375,
+        4.952,
+        -17.939
+      ]
+    },
+    "enginePods": [
+      {
+        "exhaust": [
+          9.6,
+          -2.777,
+          1.33
+        ],
+        "intake": [
+          9.6,
+          -2.777,
+          7.73
+        ],
+        "radius": 1.8,
+        "lowestPoint": [
+          9.6,
+          -4.577,
+          5.735
+        ]
+      },
+      {
+        "exhaust": [
+          -9.6,
+          -2.777,
+          1.33
+        ],
+        "intake": [
+          -9.6,
+          -2.777,
+          7.73
+        ],
+        "radius": 1.8,
+        "lowestPoint": [
+          -9.6,
+          -4.577,
+          5.735
+        ]
+      }
+    ],
+    "lights": {
+      "navL": [
+        29.751,
+        1.62,
+        -11.152
+      ],
+      "navR": [
+        -29.751,
+        1.62,
+        -11.152
+      ],
+      "tail": [
+        0,
+        1.15,
+        -36.293
+      ],
+      "beaconTop": [
+        0,
+        3.125,
+        0.157
+      ],
+      "beaconBottom": [
+        0,
+        -3.105,
+        16.827
+      ],
+      "strobeL": [
+        29.751,
+        1.62,
+        -11.502
+      ],
+      "strobeR": [
+        -29.751,
+        1.62,
+        -11.502
+      ],
+      "landingL": [
+        4.317,
+        -1.505,
+        6.684
+      ],
+      "landingR": [
+        -4.317,
+        -1.505,
+        6.684
+      ]
+    },
+    "animations": [
+      {
+        "node": "flap_in_L",
+        "kind": "flap",
+        "axis": [
+          -0.962,
+          -0.158,
+          0.224
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_L",
+        "kind": "flap",
+        "axis": [
+          -0.902,
+          -0.113,
+          0.417
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_L",
+        "kind": "spoiler",
+        "axis": [
+          0.889,
+          0.087,
+          -0.45
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_L",
+        "kind": "aileron",
+        "axis": [
+          -0.906,
+          -0.098,
+          0.411
+        ],
+        "angle": 25
+      },
+      {
+        "node": "flap_in_R",
+        "kind": "flap",
+        "axis": [
+          -0.962,
+          0.158,
+          -0.224
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_R",
+        "kind": "flap",
+        "axis": [
+          -0.902,
+          0.113,
+          -0.417
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_R",
+        "kind": "spoiler",
+        "axis": [
+          0.889,
+          -0.087,
+          0.45
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_R",
+        "kind": "aileron",
+        "axis": [
+          -0.906,
+          0.098,
+          -0.411
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_L",
+        "kind": "elevator",
+        "axis": [
+          -0.904,
+          -0.089,
+          0.419
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_R",
+        "kind": "elevator",
+        "axis": [
+          -0.904,
+          0.089,
+          -0.419
+        ],
+        "angle": 25
+      },
+      {
+        "node": "rudder",
+        "kind": "rudder",
+        "axis": [
+          0,
+          -0.84,
+          0.543
+        ],
+        "angle": 30
+      },
+      {
+        "node": "gear_nose",
+        "kind": "gear",
+        "axis": [
+          -1,
+          0,
+          0
+        ],
+        "angle": 100
+      },
+      {
+        "node": "gear_main_L",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          -1
+        ],
+        "angle": 90
+      },
+      {
+        "node": "gear_main_R",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "angle": 90
+      }
+    ],
+    "reference": {
+      "note": "origin = 25% MAC on the fuselage axis; +Y up, +Z nose, +X left wing; metres",
+      "macLength": 9.065,
+      "macLE": [
+        10.901,
+        -0.436,
+        2.266
+      ],
+      "wingArea": 442,
+      "noseTip": [
+        0,
+        -0.85,
+        30.427
+      ],
+      "tailTip": [
+        0,
+        1.15,
+        -36.373
+      ],
+      "engines": "Trent XWB-84"
+    }
+  },
+  "ke-a380": {
+    "file": "ke-a380.glb",
+    "name": "Korean Air Airbus A380-800",
+    "dims": {
+      "length": 72.72,
+      "span": 79.75,
+      "height": 24.09
+    },
+    "pilotEye": [
+      0.55,
+      1.3,
+      28.875
+    ],
+    "gear": {
+      "mains": [
+        {
+          "node": "gear_main_L",
+          "contact": [
+            6.23,
+            -6.75,
+            -3.225
+          ]
+        },
+        {
+          "node": "gear_main_R",
+          "contact": [
+            -6.23,
+            -6.75,
+            -3.225
+          ]
+        },
+        {
+          "node": "gear_body_L",
+          "contact": [
+            2.63,
+            -6.75,
+            -6.425
+          ]
+        },
+        {
+          "node": "gear_body_R",
+          "contact": [
+            -2.63,
+            -6.75,
+            -6.425
+          ]
+        }
+      ],
+      "nose": {
+        "contact": [
+          0,
+          -6.75,
+          27.175
+        ]
+      }
+    },
+    "tailStrikeDeg": 11.4,
+    "tailContact": [
+      0,
+      -2.881,
+      -25.531
+    ],
+    "wingtips": {
+      "L": [
+        39.875,
+        1.244,
+        -15.8
+      ],
+      "R": [
+        -39.875,
+        1.244,
+        -15.8
+      ]
+    },
+    "enginePods": [
+      {
+        "exhaust": [
+          25.6,
+          -2.04,
+          -6.508
+        ],
+        "intake": [
+          25.6,
+          -2.04,
+          -0.358
+        ],
+        "radius": 1.66,
+        "lowestPoint": [
+          25.6,
+          -3.7,
+          -2.239
+        ]
+      },
+      {
+        "exhaust": [
+          15.35,
+          -3.095,
+          1.172
+        ],
+        "intake": [
+          15.35,
+          -3.095,
+          7.322
+        ],
+        "radius": 1.66,
+        "lowestPoint": [
+          15.35,
+          -4.755,
+          5.441
+        ]
+      },
+      {
+        "exhaust": [
+          -15.35,
+          -3.095,
+          1.172
+        ],
+        "intake": [
+          -15.35,
+          -3.095,
+          7.322
+        ],
+        "radius": 1.66,
+        "lowestPoint": [
+          -15.35,
+          -4.755,
+          5.441
+        ]
+      },
+      {
+        "exhaust": [
+          -25.6,
+          -2.04,
+          -6.508
+        ],
+        "intake": [
+          -25.6,
+          -2.04,
+          -0.358
+        ],
+        "radius": 1.66,
+        "lowestPoint": [
+          -25.6,
+          -3.7,
+          -2.239
+        ]
+      }
+    ],
+    "lights": {
+      "navL": [
+        39.735,
+        1.38,
+        -15.494
+      ],
+      "navR": [
+        -39.735,
+        1.38,
+        -15.494
+      ],
+      "tail": [
+        0,
+        1.2,
+        -39.665
+      ],
+      "beaconTop": [
+        0,
+        4.285,
+        0.775
+      ],
+      "beaconBottom": [
+        0,
+        -4.265,
+        19.175
+      ],
+      "strobeL": [
+        39.735,
+        1.38,
+        -15.844
+      ],
+      "strobeR": [
+        -39.735,
+        1.38,
+        -15.844
+      ],
+      "landingL": [
+        4.915,
+        -2.543,
+        10.288
+      ],
+      "landingR": [
+        -4.915,
+        -2.543,
+        10.288
+      ]
+    },
+    "animations": [
+      {
+        "node": "flap_in_L",
+        "kind": "flap",
+        "axis": [
+          -0.964,
+          -0.151,
+          0.221
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_L",
+        "kind": "flap",
+        "axis": [
+          -0.884,
+          -0.103,
+          0.456
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_L",
+        "kind": "spoiler",
+        "axis": [
+          0.87,
+          0.078,
+          -0.486
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_L",
+        "kind": "aileron",
+        "axis": [
+          -0.887,
+          -0.087,
+          0.453
+        ],
+        "angle": 25
+      },
+      {
+        "node": "flap_in_R",
+        "kind": "flap",
+        "axis": [
+          -0.964,
+          0.151,
+          -0.221
+        ],
+        "angle": 35
+      },
+      {
+        "node": "flap_R",
+        "kind": "flap",
+        "axis": [
+          -0.884,
+          0.103,
+          -0.456
+        ],
+        "angle": 35
+      },
+      {
+        "node": "spoiler_R",
+        "kind": "spoiler",
+        "axis": [
+          0.87,
+          -0.078,
+          0.486
+        ],
+        "angle": 50
+      },
+      {
+        "node": "aileron_R",
+        "kind": "aileron",
+        "axis": [
+          -0.887,
+          0.087,
+          -0.453
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_L",
+        "kind": "elevator",
+        "axis": [
+          -0.924,
+          -0.083,
+          0.373
+        ],
+        "angle": 25
+      },
+      {
+        "node": "elevator_R",
+        "kind": "elevator",
+        "axis": [
+          -0.924,
+          0.083,
+          -0.373
+        ],
+        "angle": 25
+      },
+      {
+        "node": "rudder",
+        "kind": "rudder",
+        "axis": [
+          0,
+          -0.907,
+          0.422
+        ],
+        "angle": 30
+      },
+      {
+        "node": "gear_nose",
+        "kind": "gear",
+        "axis": [
+          -1,
+          0,
+          0
+        ],
+        "angle": 100
+      },
+      {
+        "node": "gear_main_L",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          -1
+        ],
+        "angle": 90
+      },
+      {
+        "node": "gear_main_R",
+        "kind": "gear",
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "angle": 90
+      },
+      {
+        "node": "gear_body_L",
+        "kind": "gear",
+        "axis": [
+          1,
+          0,
+          0
+        ],
+        "angle": 90
+      },
+      {
+        "node": "gear_body_R",
+        "kind": "gear",
+        "axis": [
+          1,
+          0,
+          0
+        ],
+        "angle": 90
+      }
+    ],
+    "reference": {
+      "note": "origin = 25% MAC on the fuselage axis; +Y up, +Z nose, +X left wing; metres",
+      "macLength": 12.603,
+      "macLE": [
+        15.038,
+        -1.075,
+        3.151
+      ],
+      "wingArea": 845,
+      "noseTip": [
+        0,
+        -1.3,
+        32.975
+      ],
+      "tailTip": [
+        0,
+        1.2,
+        -39.745
+      ],
+      "engines": "GP7270"
+    }
+  }
+}

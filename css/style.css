@@ -1,0 +1,183 @@
+:root {
+  --bg: #050b14;
+  --panel: rgba(8, 16, 28, 0.78);
+  --panel-solid: #0b1624;
+  --line: rgba(140, 180, 220, 0.18);
+  --text: #e8f1fa;
+  --dim: #8aa2b8;
+  --accent: #39c2ff;
+  --accent2: #7ef0b0;
+  --warn: #ffb020;
+  --bad: #ff4d4d;
+  --magenta: #ff6bf0;
+  --green: #3dff8f;
+  --mono: 'B612 Mono', ui-monospace, Menlo, monospace;
+  --sans: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); overflow: hidden; -webkit-user-select: none; user-select: none; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+#view { position: fixed; inset: 0; }
+.cesium-viewer-bottom { opacity: 0.55; }
+.cesium-widget-credits { font-size: 10px !important; }
+
+/* ---------- 공통 화면 ---------- */
+.screen { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; }
+.screen.dim { background: rgba(2, 6, 12, 0.62); backdrop-filter: blur(6px); z-index: 40; }
+.card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; padding: 24px 28px; min-width: 300px; max-width: min(92vw, 720px); max-height: 90vh; overflow: auto; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.card h2 { margin: 0 0 4px; font-size: 22px; }
+.card button { padding: 11px 16px; border-radius: 10px; border: 1px solid var(--line); background: #13243a; }
+.card button:hover { background: #1b3352; }
+button.primary { background: linear-gradient(180deg, #1c8fe0, #1269b0) !important; border-color: #3aa8ff !important; font-weight: 700; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- 메뉴 ---------- */
+#menu { overflow-y: auto; align-items: flex-start; background:
+  radial-gradient(1200px 600px at 70% -10%, rgba(40,120,200,0.35), transparent 60%),
+  radial-gradient(900px 500px at 0% 110%, rgba(20,90,140,0.35), transparent 60%),
+  linear-gradient(180deg, #06101c, #030810); }
+.menu-wrap { width: min(1080px, 100%); padding: 28px 16px 40px; }
+.brand small { letter-spacing: 0.3em; color: var(--accent); font-size: 12px; font-weight: 700; }
+.brand h1 { font-size: clamp(40px, 7vw, 72px); margin: 4px 0 2px; font-weight: 900; letter-spacing: -0.02em; background: linear-gradient(90deg, #fff, #8fd3ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand p { color: var(--dim); margin: 0 0 18px; }
+.step { font-size: 16px; margin: 22px 0 10px; color: var(--text); display: flex; gap: 10px; align-items: center; }
+.step b { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #002033; font-size: 13px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.ac-card { position: relative; text-align: left; padding: 14px 16px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(12, 24, 40, 0.8); transition: transform .12s, border-color .12s; overflow: hidden; }
+.ac-card:hover { transform: translateY(-2px); border-color: rgba(120, 190, 255, 0.5); }
+.ac-card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(57, 194, 255, 0.35) inset; }
+.ac-card .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+.ac-card .airline { font-size: 12px; color: var(--dim); font-weight: 700; }
+.ac-card .type { font-size: 20px; font-weight: 900; margin: 2px 0 6px; }
+.ac-card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 12px; }
+.ac-card dt { color: var(--dim); }
+.ac-card dd { margin: 0; font-family: var(--mono); font-size: 11.5px; }
+.modes { display: flex; flex-wrap: wrap; gap: 10px; }
+.mode-btn { padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: rgba(12, 24, 40, 0.8); text-align: left; min-width: 180px; }
+.mode-btn b { display: block; font-size: 15px; }
+.mode-btn small { color: var(--dim); font-size: 12px; }
+.mode-btn.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(57, 194, 255, 0.35) inset; }
+.opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.opts label, .opt-inline { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+select { background: #0e1d30; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 150px; color: var(--text); }
+.start-row { margin-top: 22px; }
+#btn-start { margin-left: auto; padding: 14px 26px; font-size: 17px; border-radius: 12px; border: 1px solid #3aa8ff; }
+.foot { color: var(--dim); font-size: 12px; margin-top: 18px; }
+.foot a { color: var(--accent); }
+
+/* ---------- 로딩 ---------- */
+#loading { background: rgba(3, 8, 16, 0.85); z-index: 30; }
+.load-card { text-align: center; color: var(--dim); }
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.12); border-top-color: var(--accent); border-radius: 50%; margin: 0 auto 14px; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- 비행 HUD ---------- */
+#hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+#hud button, #hud .knob, #mcp, #panel canvas, #touch * { pointer-events: auto; }
+#topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; gap: 10px; }
+#flight-info { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: 13px; line-height: 1.5; backdrop-filter: blur(6px); max-width: 44vw; }
+#flight-info b { color: var(--accent); }
+.top-btns { display: flex; gap: 6px; }
+.top-btns button { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; min-width: 40px; height: 36px; padding: 0 10px; backdrop-filter: blur(6px); font-family: var(--mono); font-size: 13px; }
+
+#mcp { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: rgba(20, 24, 30, 0.86); border: 1px solid #3a4250; border-radius: 10px; padding: 6px 8px; backdrop-filter: blur(6px); box-shadow: 0 6px 18px rgba(0,0,0,.35); flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 16px); }
+.mcp-grp { display: flex; align-items: center; gap: 4px; padding: 0 6px; border-right: 1px solid #333b47; }
+.mcp-grp:last-child { border-right: 0; }
+.mcp-grp label { font-family: var(--mono); font-size: 10px; color: #b8c2cf; width: 26px; text-align: center; }
+.knob { display: flex; align-items: center; background: #05080c; border-radius: 6px; border: 1px solid #2a313c; }
+.knob button { width: 24px; height: 30px; border: 0; background: transparent; color: #9fb0c3; font-size: 16px; }
+.knob output { font-family: var(--mono); font-size: 16px; color: #ffb74a; min-width: 58px; text-align: center; letter-spacing: 0.04em; }
+button.mode { font-family: var(--mono); font-size: 11px; height: 30px; padding: 0 8px; border-radius: 6px; border: 1px solid #3b4452; background: linear-gradient(180deg, #2b323c, #1d232b); color: #d5dde7; position: relative; }
+button.mode.on { color: #fff; border-color: #3dff8f; box-shadow: inset 0 -3px 0 #3dff8f; }
+button.mode.arm { box-shadow: inset 0 -3px 0 #ffffff88; }
+button.mode.big { font-weight: 700; min-width: 46px; }
+button.mode.auto { font-family: var(--sans); font-weight: 700; font-size: 12px; }
+button.mode.auto.on { background: linear-gradient(180deg, #1c8fe0, #1269b0); box-shadow: none; border-color: #3aa8ff; }
+
+#msg { position: absolute; top: 108px; left: 50%; transform: translateX(-50%); font-weight: 700; font-size: 15px; background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 8px; opacity: 0; transition: opacity .3s; white-space: nowrap; }
+#msg.show { opacity: 1; }
+#msg.warn { color: var(--warn); }
+#msg.bad { color: var(--bad); }
+#callout { position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%); font-family: var(--mono); font-size: 34px; font-weight: 700; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.8); opacity: 0; transition: opacity .25s; }
+#callout.show { opacity: 1; }
+#callout.bad { color: var(--bad); }
+
+#panel { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 8px; align-items: flex-end; }
+#panel canvas { width: 280px; height: 280px; border-radius: 10px; background: #000; border: 1px solid #222a35; box-shadow: 0 8px 22px rgba(0,0,0,.45); }
+#panel #eicas { width: 170px; height: 245px; }
+body.cockpit #panel { left: 50%; transform: translateX(-50%); bottom: 8px; }
+body.cockpit #panel canvas { width: 310px; height: 310px; }
+body.cockpit #panel #eicas { width: 190px; height: 272px; }
+body.hide-panel #panel { display: none; }
+
+#cockpit-frame { position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(10,12,16,0.96) 0, rgba(10,12,16,0.96) 5%, transparent 5.2%),
+    linear-gradient(0deg, #0b0e12 0, #0b0e12 30%, #151a21 30.3%, transparent 33%);
+}
+#cockpit-frame::before, #cockpit-frame::after { content: ''; position: absolute; top: 0; bottom: 30%; width: 7%; background: linear-gradient(90deg, #0b0e12, #181d25); }
+#cockpit-frame::before { left: 0; clip-path: polygon(0 0, 60% 0, 100% 100%, 0 100%); }
+#cockpit-frame::after { right: 0; clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%); transform: scaleX(1); }
+
+/* ---------- 터치 ---------- */
+#touch { position: absolute; inset: 0; pointer-events: none; }
+#stick { position: absolute; right: 104px; bottom: 18px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); touch-action: none; }
+#stick-knob { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(120,190,255,0.55); border: 2px solid rgba(255,255,255,0.6); }
+#thr-slider { position: absolute; right: 16px; bottom: 18px; width: 70px; height: 200px; border-radius: 12px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); touch-action: none; overflow: hidden; }
+#thr-fill { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(61,255,143,0.25); }
+#thr-handle { position: absolute; left: 4px; right: 4px; height: 26px; border-radius: 8px; background: #d8dde4; bottom: 0; }
+#thr-slider span { position: absolute; top: 6px; width: 100%; text-align: center; font-size: 11px; color: var(--dim); }
+#touch-btns { position: absolute; right: 16px; bottom: 228px; display: grid; grid-template-columns: repeat(6, 64px); gap: 6px; }
+#touch-btns button { height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 12.5px; }
+body.touch #panel canvas { width: 220px; height: 220px; }
+body.touch #panel #eicas { width: 136px; height: 196px; }
+#rotate-hint { display: none; }
+#btn-mcp { display: none; }
+
+/* 좁은 화면 (휴대폰 가로·세로) */
+@media (max-width: 900px) {
+  #flight-info { display: none; }
+  body.touch #panel #nd, body.touch #panel #eicas { display: none; }
+  body.touch #panel canvas { width: 180px; height: 180px; }
+}
+@media (max-height: 520px) {
+  #btn-mcp { display: inline-block; }
+  #mcp { display: none; top: 50px; transform: translateX(-50%) scale(0.8); transform-origin: top center; }
+  body.mcp-open #mcp { display: flex; }
+  .top-btns button { height: 32px; min-width: 34px; padding: 0 8px; font-size: 12px; }
+  #msg { top: 50px; font-size: 13px; }
+  body.touch #panel canvas { width: 165px; height: 165px; }
+  #stick { width: 124px; height: 124px; right: 96px; }
+  #thr-slider { height: 150px; }
+  #touch-btns { bottom: auto; top: 52px; right: 12px; grid-template-columns: repeat(3, 62px); }
+  #touch-btns button { height: 34px; font-size: 11.5px; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  body.touch #rotate-hint { display: flex; position: fixed; inset: 0; z-index: 60; background: rgba(3,8,16,0.92); align-items: center; justify-content: center; text-align: center; font-size: 18px; line-height: 1.7; padding: 24px; pointer-events: auto; }
+}
+
+/* ---------- 결과·도움말 ---------- */
+.result-card { min-width: min(92vw, 440px); }
+#res-score { font-size: 56px; font-weight: 900; font-family: var(--mono); }
+#res-score small { font-size: 18px; color: var(--dim); margin-left: 8px; font-family: var(--sans); }
+#res-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+#res-table td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
+#res-table td:nth-child(2) { font-family: var(--mono); text-align: right; }
+#res-table td:nth-child(3) { text-align: right; color: var(--dim); width: 60px; }
+.help-card { max-width: min(94vw, 880px); }
+.help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 20px; }
+.help-grid h3 { margin: 4px 0; font-size: 14px; color: var(--accent); }
+.help-grid p { margin: 4px 0; font-size: 13px; line-height: 1.6; }
+kbd { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: #1d2b3d; border: 1px solid #2f4460; font-family: var(--mono); font-size: 11px; text-align: center; margin-right: 2px; }
+.note { color: var(--dim); font-size: 12.5px; line-height: 1.6; }
+
+@media (max-width: 900px) {
+  #mcp { top: 52px; transform: translateX(-50%) scale(0.86); transform-origin: top center; }
+  #panel canvas { width: 200px; height: 200px; }
+  #panel #eicas { width: 124px; height: 178px; }
+  #flight-info { font-size: 11.5px; }
+}

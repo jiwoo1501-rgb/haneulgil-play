@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>하늘길</title>
+<meta name="description" content="실제 위성지형 위에서 대한항공·아시아나 여객기를 조종하는 웹 비행 시뮬레이터">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050b14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/Widgets/widgets.css">
+<link rel="stylesheet" href="css/style.css?v=202609290952">
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/Cesium.js"></script>
+</head>
+<body>
+<div id="view"></div>
+<div id="cockpit-frame" hidden></div>
+
+<!-- ===== 메인 메뉴 ===== -->
+<section id="menu" class="screen">
+  <div class="menu-wrap">
+    <header class="brand">
+      <small>WEB FLIGHT SIMULATOR · KOREA</small>
+      <h1>하늘길</h1>
+      <p>실제 위성지형 위에서 대한항공·아시아나 여객기를 조종합니다</p>
+    </header>
+
+    <h2 class="step"><b>1</b> 항공기</h2>
+    <div id="ac-list" class="cards"></div>
+
+    <h2 class="step"><b>2</b> 비행</h2>
+    <div id="mode-list" class="modes"></div>
+    <div id="mode-opts" class="opts"></div>
+
+    <div class="row start-row">
+      <label class="opt-inline">시간대
+        <select id="opt-time">
+          <option value="now">현재 시각</option>
+          <option value="8">아침 08:00</option>
+          <option value="13" selected>한낮 13:00</option>
+          <option value="18.2">노을 18:10</option>
+          <option value="21">밤 21:00</option>
+        </select>
+      </label>
+      <label class="opt-inline">건물
+        <select id="opt-bld">
+          <option value="osm" selected>3D 건물 (OSM)</option>
+          <option value="none">끄기 (빠름)</option>
+        </select>
+      </label>
+      <label class="opt-inline">화질
+        <select id="opt-q">
+          <option value="high">높음</option>
+          <option value="mid" selected>보통</option>
+          <option value="low">낮음 (태블릿)</option>
+        </select>
+      </label>
+      <button id="btn-start" class="primary">비행 시작 ✈</button>
+    </div>
+    <p class="foot">키보드·게임패드·터치 지원 · <a href="#" id="link-help">조작법</a> · 제원 출처와 추정값은 docs/research.md</p>
+  </div>
+</section>
+
+<!-- ===== 불러오는 중 ===== -->
+<section id="loading" class="screen" hidden>
+  <div class="load-card">
+    <div class="spinner"></div>
+    <p id="load-msg">지형을 불러오는 중…</p>
+  </div>
+</section>
+
+<!-- ===== 비행 화면 ===== -->
+<div id="hud" hidden>
+  <div id="topbar">
+    <div id="flight-info"></div>
+    <div class="top-btns">
+      <button id="btn-mcp" title="자동조종 패널">AP 패널</button>
+      <button id="btn-view" title="시점 (C)">시점</button>
+      <button id="btn-time" title="시간 배속 (T)">×1</button>
+      <button id="btn-sound" title="소리">🔊</button>
+      <button id="btn-help" title="조작법 (F1)">?</button>
+      <button id="btn-pause" title="일시정지 (Esc)">❚❚</button>
+    </div>
+  </div>
+
+  <div id="mcp">
+    <div class="mcp-grp"><label>SPD</label><div class="knob" data-k="spd"><button data-d="-1">−</button><output id="mcp-spd">250</output><button data-d="1">+</button></div><button class="mode" data-m="SPD" title="자동추력(A/THR) 켜기/끄기">A/THR</button></div>
+    <div class="mcp-grp"><label>HDG</label><div class="knob" data-k="hdg"><button data-d="-1">−</button><output id="mcp-hdg">330</output><button data-d="1">+</button></div><button class="mode" data-m="HDG">HDG</button><button class="mode" data-m="NAV" title="목적지 경로 따라가기">NAV</button></div>
+    <div class="mcp-grp"><label>ALT</label><div class="knob" data-k="alt"><button data-d="-1">−</button><output id="mcp-alt">10000</output><button data-d="1">+</button></div><button class="mode" data-m="FLCH" title="속도 유지하며 목표 고도로">FLCH</button><button class="mode" data-m="ALT">ALT</button></div>
+    <div class="mcp-grp"><label>V/S</label><div class="knob" data-k="vs"><button data-d="-1">−</button><output id="mcp-vs">0</output><button data-d="1">+</button></div><button class="mode" data-m="VS">V/S</button></div>
+    <div class="mcp-grp"><button class="mode" data-m="APP" title="활주로 접근·자동착륙">APP</button><button class="mode big" data-m="AP" title="자동조종 (Z)">AP</button><button class="mode auto" data-m="AUTO" title="이륙부터 착륙까지 자동 (Y)">자동비행</button></div>
+  </div>
+
+  <div id="msg"></div>
+  <div id="callout"></div>
+
+  <div id="panel">
+    <canvas id="pfd" width="360" height="360"></canvas>
+    <canvas id="nd" width="360" height="360"></canvas>
+    <canvas id="eicas" width="250" height="360"></canvas>
+  </div>
+
+  <div id="rotate-hint">📱↻<br>휴대폰을 가로로 돌려 주세요<br><small style="color:#8aa2b8">비행 화면은 가로 방향 전용입니다</small></div>
+  <!-- 터치 조종 -->
+  <div id="touch" hidden>
+    <div id="stick"><div id="stick-knob"></div></div>
+    <div id="thr-slider"><div id="thr-fill"></div><div id="thr-handle"></div><span>추력</span></div>
+    <div id="touch-btns">
+      <button data-a="gear">바퀴</button>
+      <button data-a="flaps+">플랩↓</button>
+      <button data-a="flaps-">플랩↑</button>
+      <button data-a="brake">브레이크</button>
+      <button data-a="rev">역추력</button>
+      <button data-a="auto">자동비행</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 일시정지 ===== -->
+<section id="pause" class="screen dim" hidden>
+  <div class="card">
+    <h2>일시정지</h2>
+    <button id="btn-resume" class="primary">계속하기</button>
+    <button id="btn-restart">처음부터 다시</button>
+    <button id="btn-menu">메뉴로</button>
+  </div>
+</section>
+
+<!-- ===== 결과 ===== -->
+<section id="result" class="screen dim" hidden>
+  <div class="card result-card">
+    <h2 id="res-title">착륙</h2>
+    <div id="res-score"></div>
+    <table id="res-table"></table>
+    <div class="row">
+      <button id="res-continue" class="primary">계속 비행</button>
+      <button id="res-restart">다시 하기</button>
+      <button id="res-menu">메뉴로</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 조작법 ===== -->
+<section id="help" class="screen dim" hidden>
+  <div class="card help-card">
+    <h2>조작법</h2>
+    <div class="help-grid">
+      <div><h3>조종</h3>
+        <p><kbd>↓</kbd><kbd>S</kbd> 기수 들기 · <kbd>↑</kbd><kbd>W</kbd> 기수 내리기</p>
+        <p><kbd>←</kbd><kbd>→</kbd> <kbd>A</kbd><kbd>D</kbd> 좌우 기울이기</p>
+        <p><kbd>Q</kbd><kbd>E</kbd> 방향타 · 지상에서 앞바퀴 조향</p>
+        <p><kbd>Shift</kbd> 누르고 조작하면 미세 조종</p>
+        <p class="note">조종간을 놓으면 비행기가 현재 상승각·경사를 유지합니다 (여객기 비행제어컴퓨터 방식)</p>
+      </div>
+      <div><h3>엔진·장치</h3>
+        <p><kbd>+</kbd><kbd>−</kbd> 또는 <kbd>PgUp</kbd><kbd>PgDn</kbd> 추력</p>
+        <p><kbd>F</kbd> 플랩 내리기 · <kbd>V</kbd> 플랩 올리기</p>
+        <p><kbd>G</kbd> 바퀴 올리기/내리기</p>
+        <p><kbd>B</kbd>(누르기) 브레이크 · <kbd>P</kbd> 주차 브레이크</p>
+        <p><kbd>R</kbd> 역추력 (착륙 후) · <kbd>/</kbd> 스피드브레이크</p>
+        <p><kbd>K</kbd> 자동브레이크 (바퀴 내리면 MED 자동 설정)</p>
+      </div>
+      <div><h3>자동</h3>
+        <p><kbd>Y</kbd> 자동비행 (이륙→착륙 전부 자동)</p>
+        <p><kbd>Z</kbd> 자동조종 · <kbd>X</kbd> 자동추력</p>
+        <p>화면 위 패널에서 속도·방향·고도 목표를 바꿉니다</p>
+        <p><kbd>L</kbd> 자동착륙 준비 (APP)</p>
+      </div>
+      <div><h3>화면</h3>
+        <p><kbd>C</kbd> 또는 <kbd>1</kbd>~<kbd>4</kbd> 시점 (조종석·추적·자유·관제탑)</p>
+        <p>마우스 끌기: 둘러보기 · 휠: 거리</p>
+        <p><kbd>T</kbd> 시간 배속 · <kbd>H</kbd> 계기판 숨기기 · <kbd>Esc</kbd> 일시정지</p>
+      </div>
+    </div>
+    <p class="note">이륙 요령: 추력 최대(<kbd>+</kbd> 길게) → 주차 브레이크 풀기(<kbd>P</kbd>) → 속도계의 VR 표시에서 <kbd>↓</kbd> 로 천천히 들기 → 상승하면 <kbd>G</kbd> 바퀴 올림</p>
+    <button id="help-close" class="primary">닫기</button>
+  </div>
+</section>
+
+<script type="module" src="js/main.js?v=202609290952"></script>
+</body>
+</html>
