@@ -1,16 +1,16 @@
 /* global Cesium */
 // 하늘길 — 메뉴 · 비행 준비 · 게임 루프 · 계기/패널 연결
-import { AIRCRAFT, AIRCRAFT_ORDER, planWeights } from '../data/aircraft.js?v=202609291314';
-import { AIRPORTS, ROUTES } from '../data/airports.js?v=202609291314';
-import { View } from './view.js?v=202609291314';
-import { Hud } from './hud.js?v=202609291314';
-import { Controls } from './controls.js?v=202609291314';
-import { Audio } from './audio.js?v=202609291314';
-import { Sim, makeEnv } from './sim.js?v=202609291314';
-import { runwayGeom, rwyRel, finalFix, toMag, toTrue } from './nav.js?v=202609291314';
-import { scoreLanding } from './score.js?v=202609291314';
-import { DEG, KT, FT, FPM, NM, clamp, distBrg, angDiff } from './geo.js?v=202609291314';
-import { machToCas } from './atmosphere.js?v=202609291314';
+import { AIRCRAFT, AIRCRAFT_ORDER, planWeights } from '../data/aircraft.js?v=202609291349';
+import { AIRPORTS, ROUTES } from '../data/airports.js?v=202609291349';
+import { View } from './view.js?v=202609291349';
+import { Hud } from './hud.js?v=202609291349';
+import { Controls } from './controls.js?v=202609291349';
+import { Audio } from './audio.js?v=202609291349';
+import { Sim, makeEnv } from './sim.js?v=202609291349';
+import { runwayGeom, rwyRel, finalFix, toMag, toTrue } from './nav.js?v=202609291349';
+import { scoreLanding } from './score.js?v=202609291349';
+import { DEG, KT, FT, FPM, NM, clamp, distBrg, angDiff } from './geo.js?v=202609291349';
+import { machToCas } from './atmosphere.js?v=202609291349';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -108,7 +108,7 @@ async function ensureView(msg) {
       return { lat: a.lat * DEG, lon: a.lon * DEG, N: gs.reduce((s, g) => s + g.geoidN, 0) / gs.length };
     });
     view.viewer.scene.preUpdate.addEventListener(frame);
-    try { meta = await (await fetch('models/models.json?v=202609291314', { cache: 'no-cache' })).json(); } catch { meta = {}; }
+    try { meta = await (await fetch('models/models.json?v=202609291349', { cache: 'no-cache' })).json(); } catch { meta = {}; }
   }
   await viewReady;
   return Object.values(runways);
@@ -180,7 +180,7 @@ async function startFlight() {
     const m = meta[ac.id];
     sim = new Sim({ ac, meta: m, env, dep, dest, cruiseFt, start, routeKm });
     scenario = { ac, dep, dest, cruiseFt, label, start };
-    try { await view.loadAircraft(ac.model + '?v=' + (m?.version || '202609291314'), m); } catch (e) { console.warn('모델 없음', e); }
+    try { await view.loadAircraft(ac.model + '?v=' + (m?.version || '202609291349'), m); } catch (e) { console.warn('모델 없음', e); }
     if (dest) view.makePapi(dest);
     view.makeRunwayLights(all);
     towerCache = null;
@@ -567,7 +567,8 @@ function frame() {
   if (view.scene.light && 'intensity' in view.scene.light) view.scene.light.intensity = 2.0 * day;
   if (view.model && view.model.imageBasedLighting && Math.abs((view._day ?? -1) - day) > 0.01) {
     view._day = day;
-    view.model.imageBasedLighting.imageBasedLightingFactor = new Cesium.Cartesian2(day, day);
+    // 하늘빛 반사(환경광): 1배면 배·날개 아랫면·금속면이 거의 검게 보여 낮에는 확산 2배·반사 1.5배
+    view.model.imageBasedLighting.imageBasedLightingFactor = new Cesium.Cartesian2(2.0 * day, 1.5 * day);
   }
   view.updateAircraft(fm, sim, t);
   if (!window.__freeCam) view.updateCamera(dt, fm, tower());

@@ -1,9 +1,10 @@
 /* global Cesium */
 // Cesium 화면: 지구·지형·건물, 항공기 모델, 조명, 카메라 시점, PAPI
-import { CESIUM_TOKEN } from './config.js?v=202609291314';
-import { v3, quat, enu, geodeticToEcef, ecefToGeodetic, DEG, clamp, angDiff, destPoint } from './geo.js?v=202609291314';
-import { rwyRel } from './nav.js?v=202609291314';
-import { FlatTerrainProvider, sampleRunway, fitProfile, makeZone } from './flatten.js?v=202609291314';
+import { CESIUM_TOKEN } from './config.js?v=202609291349';
+import { v3, quat, enu, geodeticToEcef, ecefToGeodetic, DEG, clamp, angDiff, destPoint } from './geo.js?v=202609291349';
+import { rwyRel } from './nav.js?v=202609291349';
+import { FlatTerrainProvider, sampleRunway, buildAirportZone } from './flatten.js?v=202609291349';
+import { AIRPORT_AREAS } from '../data/airport-areas.js?v=202609291349';
 
 const C3 = (a) => new Cesium.Cartesian3(a[0], a[1], a[2]);
 
@@ -23,27 +24,19 @@ export class View {
     this.opts = opts;
     const q = opts.quality;
     const inner = await Cesium.createWorldTerrainAsync({ requestWaterMask: true, requestVertexNormals: true });
-    onMsg('활주로 높이 측정 중…');
+    onMsg('활주로·공항 부지 높이 측정 중…');
+    // 물리적 활주로 1개당 한쪽 끝만 원본 높이 샘플링
+    const samples = new Map();
+    const seen = new Set();
+    const phys = runways.filter((g) => { const k = g.icao + g.rwyId; if (seen.has(k)) return false; seen.add(k); return true; });
+    await Promise.all(phys.map(async (g) => samples.set(g.icao + g.rwyId + g.name, await sampleRunway(inner, g))));
     const zones = [];
-    const done = new Set();
-    await Promise.all(runways.map(async (g) => {
-      const key = g.icao + g.rwyId;
-      if (done.has(key)) return;
-      done.add(key);
-      const samples = await sampleRunway(inner, g);
-      const fit = fitProfile(samples);
-      zones.push(makeZone(g, fit));
-      // 같은 활주로의 양쪽 끝에 적용 (반대 방향은 거리 뒤집기)
-      for (const o of runways.filter((r) => r.icao === g.icao && r.rwyId === g.rwyId)) {
-        const hA = fit.a, hB = fit.a + fit.b * g.len;
-        const [h0, h1] = o.name === g.name ? [hA, hB] : [hB, hA];
-        o.profile = [{ s: 0, h: h0 }, { s: o.len, h: h1 }];
-        o.h0 = h0 + (h1 - h0) * (o.disp / o.len);
-        o.h1 = h1;
-        o.geoidN = o.h0 - o.elevFt * 0.3048;
-        o.rawSamples = o.name === g.name ? samples : null;
-      }
-    }));
+    for (const icao of new Set(runways.map((g) => g.icao))) {
+      const list = runways.filter((g) => g.icao === icao);
+      if (!AIRPORT_AREAS[icao]) continue;
+      zones.push(buildAirportZone(list[0].apt, list, samples, AIRPORT_AREAS[icao]));
+    }
+    this.zones = zones;
     const terrainProvider = new FlatTerrainProvider(inner, zones);
     this.terrainProvider = terrainProvider;
     const Q = QUALITY[q] || QUALITY.mid;
@@ -92,7 +85,12 @@ export class View {
     // 건물
     try {
       if (opts.buildings === 'osm') {
-        this.tiles = await Cesium.createOsmBuildingsAsync();
+        // 높이 자료가 잘못된 OSM 건물(수백 m 기둥) 숨김 — 국내 350m 넘는 건물은 롯데월드타워뿐
+        this.tiles = await Cesium.createOsmBuildingsAsync({
+          style: new Cesium.Cesium3DTileStyle({
+            show: "${feature['cesium#estimatedHeight']} < 350 || ${feature['name']} === '롯데월드타워' || ${feature['name:en']} === 'Lotte World Tower'",
+          }),
+        });
         scene.primitives.add(this.tiles);
       } else if (opts.buildings === 'google') {
         this.tiles = await Cesium.createGooglePhotorealistic3DTileset();

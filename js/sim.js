@@ -1,12 +1,12 @@
 // 시뮬레이션 묶음: 물리 + 비행제어 + 자동조종 + 자동비행 + 조종사 입력
-import { FlightModel } from './physics.js?v=202609291314';
-import { FlightControl } from './fbw.js?v=202609291314';
-import { Autopilot } from './autopilot.js?v=202609291314';
-import { AutoFlight } from './fms.js?v=202609291314';
-import { DEG, KT, FT, NM, FPM, clamp, destPoint, distBrg } from './geo.js?v=202609291314';
-import { rwyRel, rwySurfaceH, finalFix, GS_ANGLE, GPI, toMag } from './nav.js?v=202609291314';
-import { planWeights } from '../data/aircraft.js?v=202609291314';
-import { thrustLapse } from './physics.js?v=202609291314';
+import { FlightModel } from './physics.js?v=202609291349';
+import { FlightControl } from './fbw.js?v=202609291349';
+import { Autopilot } from './autopilot.js?v=202609291349';
+import { AutoFlight } from './fms.js?v=202609291349';
+import { DEG, KT, FT, NM, FPM, clamp, destPoint, distBrg } from './geo.js?v=202609291349';
+import { rwyRel, rwySurfaceH, finalFix, GS_ANGLE, GPI, toMag } from './nav.js?v=202609291349';
+import { planWeights } from '../data/aircraft.js?v=202609291349';
+import { thrustLapse } from './physics.js?v=202609291349';
 
 const G0 = 9.80665;
 
